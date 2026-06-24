@@ -1,0 +1,219 @@
+/* ============================================================================
+   Tailwind v4 — theme + utilities layers only (NO preflight).
+   The original project shipped no Tailwind reset; its only resets were
+   `*{box-sizing:border-box}` and `html,body{margin:0;padding:0}` (reproduced
+   verbatim below). Omitting preflight keeps the element/default environment
+   byte-for-byte identical to the source, per the fidelity-first migration.
+   ============================================================================ */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/* ----------------------------------------------------------------------------
+   Design tokens exposed to Tailwind. `@theme inline` keeps the var() reference
+   intact, so utilities such as `bg-surface`, `text-primary`, `font-mono`,
+   `rounded-card` follow the live light/dark switch (which flips the runtime
+   CSS variables defined further down) automatically.
+   ---------------------------------------------------------------------------- */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-inset: var(--surface-inset);
+  --color-border: var(--border);
+  --color-divider: var(--divider);
+  --color-text: var(--text);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-primary: var(--primary);
+  --color-primary-tint: var(--primary-tint);
+  --color-sidebar: var(--sidebar);
+  --color-money: var(--money);
+  --color-money-tint: var(--money-tint);
+  --color-gold: var(--gold);
+  --color-gold-text: var(--gold-text);
+
+  --font-sans: "Poppins", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --radius-card: 14px;
+}
+
+/* ============================================================================
+   Original global stylesheet — ported 1:1 from the source <style> block.
+   ============================================================================ */
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+body {
+  font-family: "Poppins", system-ui, sans-serif;
+  font-weight: 700;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* premium ambient sheen + fine grain */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(120% 90% at 88% -10%, var(--sheen-a) 0%, transparent 55%),
+    radial-gradient(90% 80% at -5% 110%, var(--sheen-b) 0%, transparent 50%);
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.025;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+:root {
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-inset: #f7f8fb;
+  --border: #eceef3;
+  --divider: #f1f2f6;
+  --text: #0b1230;
+  --text-secondary: #5a6072;
+  --text-muted: #9aa0b0;
+  --primary: #02066f;
+  --primary-tint: #ecedf6;
+  --sidebar: #02066f;
+  --money: #0e6b4f;
+  --money-tint: #e6f5ee;
+  --gold-text: #7a5c00;
+  --gold: #fac800;
+  --topbar-bg: rgba(255, 255, 255, 0.86);
+  --sheen-a: rgba(250, 200, 0, 0.06);
+  --sheen-b: rgba(2, 6, 111, 0.045);
+  --card-edge: rgba(255, 255, 255, 0.7);
+}
+[data-theme="dark"] {
+  --bg: #0b1020;
+  --surface: #151b2e;
+  --surface-inset: #1d2540;
+  --border: #28314c;
+  --divider: #222b45;
+  --text: #eaecf6;
+  --text-secondary: #a6aec8;
+  --text-muted: #737b97;
+  --primary: #5c70f0;
+  --primary-tint: #1f2746;
+  --sidebar: #0e142a;
+  --money: #16a36f;
+  --money-tint: #0f3a2c;
+  --gold-text: #f1c400;
+  --gold: #fac800;
+  --topbar-bg: rgba(15, 20, 38, 0.86);
+  --sheen-a: rgba(92, 112, 240, 0.1);
+  --sheen-b: rgba(250, 200, 0, 0.05);
+  --card-edge: rgba(255, 255, 255, 0.04);
+}
+
+input,
+select,
+textarea {
+  background: var(--surface);
+  color: var(--text);
+}
+input::placeholder {
+  color: var(--text-muted);
+}
+option {
+  color: #0b1230;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: #e3e6ee;
+  border-radius: 8px;
+  border: 3px solid #fff;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(250, 200, 0, 0.45);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(250, 200, 0, 0);
+  }
+}
+@keyframes pulseNavy {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(2, 6, 111, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 5px rgba(2, 6, 111, 0);
+  }
+}
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes hi {
+  from {
+    background: #fff7d1;
+  }
+  to {
+    background: transparent;
+  }
+}
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ----------------------------------------------------------------------------
+   Hover states. The dc-runtime turned each `style-hover="…"` attribute into a
+   generated `.scpN:hover{…}` rule; these two classes reproduce the exact CSS
+   declarations used across the template (the only two hover effects present).
+   ---------------------------------------------------------------------------- */
+.hov-inset:hover {
+  background: var(--surface-inset);
+}
+.hov-primary-border:hover {
+  border-color: var(--primary);
+}
