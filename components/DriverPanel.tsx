@@ -877,16 +877,8 @@ export default class DriverPanel extends React.Component<
       goWallet: () => this.go("wallet"),
       goSettings: () => this.go("settings"),
       goRequests: () => this.go("requests"),
-      notifOn: s.notifOn,
-      onBell: () => {
-        const next = !this.state.notifOn;
-        this.setState({ notifOn: next });
-        this._toast(
-          "Realtime alerts",
-          next ? "On" : "Off",
-          next ? "#107A52" : "#9AA0B0",
-        );
-      },
+      onBell: () =>
+        this._toast("Notifications", "You’re all caught up.", "var(--primary)"),
       profileName: "Operator",
       profileRole: "Admin",
       profileEmail: s.settings

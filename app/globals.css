@@ -219,17 +219,21 @@ option {
 }
 
 /* ----------------------------------------------------------------------------
-   Premium top-bar controls (wallet / theme / bell / profile cluster).
-   Glassy surface with a hairline top sheen, layered depth, and a subtle lift +
-   brand-tinted ring on hover. Works in both light and dark themes.
+   Premium top-bar controls (wallet / theme / bell / profile cluster) —
+   frosted glass: a translucent blurred surface, a crisp 1px top highlight,
+   layered depth, and a refined hover-lift. Light + dark; layout unchanged.
+   The plain `background` line before each color-mix is a graceful fallback for
+   browsers without color-mix support.
    ---------------------------------------------------------------------------- */
 .tbx-control {
   position: relative;
   border: 1px solid var(--border);
-  background:
-    linear-gradient(180deg, var(--card-edge), transparent 62%),
-    var(--surface);
+  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  backdrop-filter: blur(10px) saturate(1.1);
   box-shadow:
+    inset 0 1px 0 var(--card-edge),
     0 1px 1px rgba(2, 6, 111, 0.04),
     0 10px 26px -16px rgba(2, 6, 111, 0.22);
   transition:
@@ -240,53 +244,14 @@ option {
 }
 .tbx-control:hover {
   transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--primary) 32%, var(--border));
+  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 84%, transparent);
+  border-color: color-mix(in srgb, var(--primary) 22%, var(--border));
   box-shadow:
+    inset 0 1px 0 var(--card-edge),
     0 2px 6px rgba(2, 6, 111, 0.06),
-    0 16px 34px -16px rgba(2, 6, 111, 0.32);
+    0 16px 34px -16px rgba(2, 6, 111, 0.3);
 }
 .tbx-control:active {
   transform: translateY(0);
-}
-.tbx-wallet:hover {
-  border-color: color-mix(in srgb, var(--gold) 50%, var(--border));
-  box-shadow:
-    0 2px 8px rgba(250, 200, 0, 0.12),
-    0 16px 34px -16px rgba(2, 6, 111, 0.32);
-}
-
-/* Profile avatar — brand navy→indigo gradient with a hairline gold ring. */
-.tbx-avatar {
-  position: relative;
-  background: linear-gradient(150deg, #5c70f0 0%, #02066f 72%);
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.14),
-    0 0 0 1.5px rgba(250, 200, 0, 0.5),
-    0 4px 10px -3px rgba(2, 6, 111, 0.5);
-}
-[data-theme="dark"] .tbx-avatar {
-  background: linear-gradient(150deg, #8b99ff 0%, #2a33a0 76%);
-}
-.tbx-online {
-  position: absolute;
-  right: -2px;
-  bottom: -2px;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: #16a36f;
-  border: 2px solid var(--surface);
-}
-
-/* Bell "realtime alerts active" indicator. */
-.tbx-bell-dot {
-  position: absolute;
-  top: 8px;
-  right: 9px;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--gold);
-  border: 1.5px solid var(--surface);
-  animation: pulse 1.8s infinite;
 }
