@@ -1,7 +1,12 @@
 "use client";
 import type { ViewModel } from "@/types";
 
-/** Top bar (header) — ported 1:1 from the source template. */
+/**
+ * Top bar (header). The right-hand cluster (wallet / theme / bell / profile)
+ * gets a premium treatment via the `.tbx-*` classes in globals.css. The bell
+ * doubles as the realtime-alerts toggle (vm.onBell flips vm.notifOn); an active
+ * gold dot + tooltip reflect the state.
+ */
 export default function Topbar({ vm }: { vm: ViewModel }) {
   return (
     <header
@@ -71,19 +76,16 @@ export default function Topbar({ vm }: { vm: ViewModel }) {
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <button
           onClick={vm.goWallet}
+          className="tbx-control tbx-wallet"
           style={{
             display: "flex",
             alignItems: "center",
             gap: "11px",
             height: "40px",
             padding: "0 14px",
-            border: "1px solid var(--border)",
             borderRadius: "11px",
-            background: "var(--surface)",
             cursor: "pointer",
             fontFamily: "inherit",
-            boxShadow:
-              "0 1px 1px rgba(2,6,111,.04),0 10px 28px -14px rgba(2,6,111,.14)",
           }}
         >
           <span
@@ -91,7 +93,11 @@ export default function Topbar({ vm }: { vm: ViewModel }) {
               width: "26px",
               height: "26px",
               borderRadius: "7px",
-              background: "var(--money-tint)",
+              backgroundColor: "var(--money-tint)",
+              backgroundImage:
+                "linear-gradient(135deg, var(--money-tint), color-mix(in srgb, var(--money) 24%, var(--money-tint)))",
+              boxShadow:
+                "inset 0 0 0 1px color-mix(in srgb, var(--money) 16%, transparent)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -140,13 +146,12 @@ export default function Topbar({ vm }: { vm: ViewModel }) {
         <button
           onClick={vm.onToggleTheme}
           title="Toggle theme"
+          className="tbx-control"
           style={{
             position: "relative",
             width: "40px",
             height: "40px",
-            border: "1px solid var(--border)",
             borderRadius: "11px",
-            background: "var(--surface)",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
@@ -158,13 +163,13 @@ export default function Topbar({ vm }: { vm: ViewModel }) {
         </button>
         <button
           onClick={vm.onBell}
+          title={vm.notifOn ? "Realtime alerts: on" : "Realtime alerts: off"}
+          className="tbx-control"
           style={{
             position: "relative",
             width: "40px",
             height: "40px",
-            border: "1px solid var(--border)",
             borderRadius: "11px",
-            background: "var(--surface)",
             cursor: "pointer",
             display: "flex",
             alignItems: "center",
@@ -172,29 +177,37 @@ export default function Topbar({ vm }: { vm: ViewModel }) {
             color: "var(--text-secondary)",
           }}
         >
-          {vm.bellIcon}
+          <span
+            style={{
+              display: "flex",
+              opacity: vm.notifOn ? 1 : 0.5,
+              transition: "opacity .2s ease",
+            }}
+          >
+            {vm.bellIcon}
+          </span>
+          {vm.notifOn && <span className="tbx-bell-dot" />}
         </button>
         <button
           onClick={vm.onToggleProfile}
+          className="tbx-control tbx-profile"
           style={{
             display: "flex",
             alignItems: "center",
             gap: "9px",
             height: "40px",
             padding: "0 7px 0 7px",
-            border: "1px solid var(--border)",
             borderRadius: "11px",
-            background: "var(--surface)",
             cursor: "pointer",
             fontFamily: "inherit",
           }}
         >
           <span
+            className="tbx-avatar"
             style={{
               width: "28px",
               height: "28px",
               borderRadius: "8px",
-              background: "var(--primary)",
               color: "#fff",
               display: "flex",
               alignItems: "center",
@@ -204,6 +217,7 @@ export default function Topbar({ vm }: { vm: ViewModel }) {
             }}
           >
             OP
+            <span className="tbx-online" />
           </span>
           <span
             style={{ textAlign: "left", lineHeight: 1.1, paddingRight: "4px" }}

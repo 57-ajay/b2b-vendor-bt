@@ -148,7 +148,7 @@ export default class DriverPanel extends React.Component<
       receiptModal: null,
       settingsTab: "profile",
       topupCustom: "",
-      notifOn: true,
+      notifOn: false,
       accent: "#FAC800",
       priceEdit: "150",
       pricingOpen: false,
@@ -206,7 +206,8 @@ export default class DriverPanel extends React.Component<
     this._tick = setInterval(() => this.setState({ now: Date.now() }), 1000);
     this.svc.scheduleLiveArrival((nr) => {
       this._prevStatus[nr.requestId] = nr.status;
-      this._toast(nr.vehicleNumber, "New request received", "#FAC800");
+      if (this.state.notifOn)
+        this._toast(nr.vehicleNumber, "New request received", "#FAC800");
     });
   }
 
@@ -223,9 +224,8 @@ export default class DriverPanel extends React.Component<
   }
 
   _emitToast(r: DriverRequest) {
+    if (!this.state.notifOn) return;
     const m = STATUS_META[r.status];
-    if (!this.state.notifOn && r.status !== "COMPLETED" && r.status !== "FAILED")
-      return;
     const id = ++this._toastSeq;
     const title = r.vehicleNumber;
     let msg = m.label,
@@ -877,8 +877,16 @@ export default class DriverPanel extends React.Component<
       goWallet: () => this.go("wallet"),
       goSettings: () => this.go("settings"),
       goRequests: () => this.go("requests"),
-      onBell: () =>
-        this._toast("Notifications", "You’re all caught up.", "var(--primary)"),
+      notifOn: s.notifOn,
+      onBell: () => {
+        const next = !this.state.notifOn;
+        this.setState({ notifOn: next });
+        this._toast(
+          "Realtime alerts",
+          next ? "On" : "Off",
+          next ? "#107A52" : "#9AA0B0",
+        );
+      },
       profileName: "Operator",
       profileRole: "Admin",
       profileEmail: s.settings
