@@ -9,6 +9,7 @@ export default function Sidebar({ vm }: { vm: ViewModel }) {
     <aside
       style={{
         flex: "none",
+        width: vm.sidebarWidth,
         background: "linear-gradient(185deg,#0A0F4D 0%,var(--sidebar) 55%)",
         color: "#fff",
         display: "flex",
