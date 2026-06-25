@@ -29,161 +29,21 @@ import {
   Zap,
 } from "lucide-react";
 
+import {
+  Alert,
+  alertLink,
+  BTN_GHOST,
+  BTN_PRIMARY,
+  CardHead,
+  Dot,
+  type IconType,
+  MetaItem,
+  MONO,
+} from "@/components/premium";
 import type { FieldRow, ViewModel } from "@/types";
 
-const MONO = "'JetBrains Mono',monospace";
-
-type IconType = React.ComponentType<{
-  size?: number;
-  strokeWidth?: number;
-  style?: React.CSSProperties;
-}>;
-
-/* ---------------------------------------------------------------- primitives */
-
-/** Consistent card section header: tinted icon chip + title + optional aside. */
-function CardHead({
-  icon: Icon,
-  title,
-  tint = "var(--primary)",
-  tintBg = "var(--primary-tint)",
-  aside,
-  mb = 20,
-}: {
-  icon: IconType;
-  title: string;
-  tint?: string;
-  tintBg?: string;
-  aside?: React.ReactNode;
-  mb?: number;
-}) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "11px",
-        marginBottom: mb,
-      }}
-    >
-      <span
-        style={{
-          width: "32px",
-          height: "32px",
-          flex: "none",
-          borderRadius: "10px",
-          background: tintBg,
-          color: tint,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Icon size={16} strokeWidth={2.2} />
-      </span>
-      <span
-        style={{
-          fontSize: "15px",
-          fontWeight: 600,
-          color: "var(--text)",
-          letterSpacing: "-.01em",
-        }}
-      >
-        {title}
-      </span>
-      {aside != null && <div style={{ marginLeft: "auto" }}>{aside}</div>}
-    </div>
-  );
-}
-
-const ALERT_TONES = {
-  success: {
-    fg: "var(--money)",
-    bg: "var(--money-tint)",
-    bd: "color-mix(in srgb, var(--money) 22%, transparent)",
-  },
-  warn: { fg: "var(--warn)", bg: "var(--warn-tint)", bd: "var(--warn-border)" },
-  danger: {
-    fg: "var(--danger)",
-    bg: "var(--danger-tint)",
-    bd: "var(--danger-border)",
-  },
-};
-
-function Alert({
-  tone,
-  icon: Icon,
-  children,
-}: {
-  tone: keyof typeof ALERT_TONES;
-  icon: IconType;
-  children: React.ReactNode;
-}) {
-  const t = ALERT_TONES[tone];
-  return (
-    <div
-      style={{
-        display: "flex",
-        gap: "10px",
-        alignItems: "flex-start",
-        padding: "12px 14px",
-        borderRadius: "12px",
-        background: t.bg,
-        border: "1px solid " + t.bd,
-        color: t.fg,
-        fontSize: "12.5px",
-        fontWeight: 500,
-        lineHeight: 1.5,
-      }}
-    >
-      <Icon size={15} strokeWidth={2.2} style={{ flex: "none", marginTop: "1px" }} />
-      <div>{children}</div>
-    </div>
-  );
-}
-
-/** Inline link styled to sit inside a coloured alert. */
-function alertLink(color: string): React.CSSProperties {
-  return {
-    border: "none",
-    background: "transparent",
-    color,
-    fontWeight: 700,
-    cursor: "pointer",
-    fontFamily: "inherit",
-    padding: 0,
-    fontSize: "inherit",
-    textDecoration: "underline",
-  };
-}
-
-const META_ITEM: React.CSSProperties = {
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "5px",
-  fontSize: "12.5px",
-  fontWeight: 500,
-  color: "var(--text-secondary)",
-};
-function MetaItem({ icon: Icon, children }: { icon: IconType; children: React.ReactNode }) {
-  return (
-    <span style={META_ITEM}>
-      <Icon size={13} strokeWidth={2} />
-      {children}
-    </span>
-  );
-}
-const Dot = () => (
-  <span
-    style={{
-      width: "3px",
-      height: "3px",
-      flex: "none",
-      borderRadius: "50%",
-      background: "var(--text-muted)",
-    }}
-  />
-);
+/* Shared primitives come from "@/components/premium"; the helpers below are
+   specific to the request-detail view. */
 
 function FieldIcon({ label }: { label: string }) {
   const l = label.toLowerCase();
@@ -313,37 +173,6 @@ function PriceRow({
   );
 }
 
-/* Shared button styles. */
-const BTN_PRIMARY: React.CSSProperties = {
-  width: "100%",
-  height: "48px",
-  border: "none",
-  borderRadius: "12px",
-  background: "var(--primary)",
-  color: "#fff",
-  fontSize: "14.5px",
-  fontWeight: 600,
-  fontFamily: "inherit",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "8px",
-};
-const BTN_GHOST: React.CSSProperties = {
-  flex: 1,
-  height: "44px",
-  border: "1px solid var(--border)",
-  borderRadius: "11px",
-  background: "var(--surface)",
-  color: "var(--text)",
-  fontSize: "13px",
-  fontWeight: 600,
-  fontFamily: "inherit",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "7px",
-};
 const CARD_DESC: React.CSSProperties = {
   fontSize: "13px",
   color: "var(--text-secondary)",
@@ -426,7 +255,12 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
       {/* ---------------------------------------------------------- header */}
       <section
         className="rd-card"
-        style={{ padding: "22px 24px", marginBottom: "20px" }}
+        style={{
+          padding: "22px 24px",
+          marginBottom: "20px",
+          background:
+            "linear-gradient(180deg, color-mix(in srgb, var(--primary) 5%, var(--surface)) 0%, var(--surface) 62%)",
+        }}
       >
         <div
           style={{
@@ -498,21 +332,46 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
       {/* ------------------------------------------------------ dashboard grid */}
       <div className="rd-grid">
         {/* Customer information */}
-        <section className="rd-card" style={{ padding: "24px", animationDelay: ".04s" }}>
+        <section
+          className="rd-card"
+          style={{
+            padding: "24px",
+            animationDelay: ".04s",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           <CardHead icon={FileText} title="Customer information" />
-          <div className="rd-fields">
-            {fields.length === 0 ? (
-              <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-                No submission details.
-              </div>
-            ) : (
-              fields.map((f, i) => <FieldCell key={i} f={f} />)
-            )}
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
+          >
+            <div className="rd-fields">
+              {fields.length === 0 ? (
+                <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>
+                  No submission details.
+                </div>
+              ) : (
+                fields.map((f, i) => <FieldCell key={i} f={f} />)
+              )}
+            </div>
           </div>
         </section>
 
         {/* Processing card */}
-        <section className="rd-card" style={{ padding: "24px", animationDelay: ".08s" }}>
+        <section
+          className="rd-card"
+          style={{
+            padding: "24px",
+            animationDelay: ".08s",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           {/* PENDING */}
           {vm.ac_pending && (
             <>
@@ -661,7 +520,7 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
 
           {/* PROCESSING */}
           {vm.ac_processing && (
-            <div style={CENTERED}>
+            <div style={{ ...CENTERED, flex: 1, justifyContent: "center" }}>
               <span
                 style={{
                   width: "44px",
@@ -780,7 +639,7 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
 
           {/* RECONCILING */}
           {vm.ac_reconciling && (
-            <div style={CENTERED}>
+            <div style={{ ...CENTERED, flex: 1, justifyContent: "center" }}>
               <span
                 style={{
                   width: "44px",
@@ -953,14 +812,30 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
         </section>
 
         {/* Pricing breakdown */}
-        <section className="rd-card" style={{ padding: "24px", animationDelay: ".16s" }}>
+        <section
+          className="rd-card"
+          style={{
+            padding: "24px",
+            animationDelay: ".16s",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           <CardHead
             icon={TrendingUp}
             title="Pricing breakdown"
             tint="var(--money)"
             tintBg="var(--money-tint)"
           />
-          <div style={{ display: "flex", flexDirection: "column" }}>
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
+          >
+            <div style={{ display: "flex", flexDirection: "column" }}>
             <PriceRow
               icon={ArrowDownLeft}
               iconTone="var(--money)"
@@ -1028,6 +903,7 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
             >
               {vm.d_pr_profit}
             </span>
+          </div>
           </div>
         </section>
 

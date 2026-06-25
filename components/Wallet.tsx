@@ -1,30 +1,88 @@
 "use client";
-import type { ViewModel } from "@/types";
+import { Activity, Inbox, Plus, Wallet } from "lucide-react";
 
-const CARD_SHADOW =
-  "0 1px 1px rgba(2,6,111,.04),0 10px 28px -14px rgba(2,6,111,.14)";
+import {
+  type Column,
+  CardHead,
+  DataTable,
+  EmptyState,
+  MONO,
+  StatusPill,
+} from "@/components/premium";
+import type { TxnRow, ViewModel } from "@/types";
 
-/** Wallet route — ported 1:1 from the source template (sc-if routeIsWallet). */
+const TXN_COLUMNS: Column<TxnRow>[] = [
+  {
+    label: "Type",
+    width: 138,
+    cell: (t) => <StatusPill text={t.type} bg={t.tagBg} color={t.tagText} dot={t.tagDot} />,
+  },
+  {
+    label: "Reference",
+    flex: 1,
+    cell: (t) => (
+      <span style={{ fontFamily: MONO, fontSize: "12.5px", color: "var(--text-secondary)" }}>
+        {t.ref}
+      </span>
+    ),
+  },
+  {
+    label: "Amount",
+    width: 116,
+    align: "right",
+    cell: (t) => (
+      <span style={{ fontFamily: MONO, fontSize: "13px", fontWeight: 600, color: t.amtColor }}>
+        {t.amount}
+      </span>
+    ),
+  },
+  {
+    label: "Balance",
+    width: 124,
+    align: "right",
+    cell: (t) => (
+      <span style={{ fontFamily: MONO, fontSize: "12.5px", color: "var(--text-secondary)" }}>
+        {t.balance}
+      </span>
+    ),
+  },
+  {
+    label: "When",
+    width: 92,
+    align: "right",
+    cell: (t) => <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{t.time}</span>,
+  },
+];
+
+/** Wallet route — visual redesign; balances, top-up and txn logic unchanged. */
 export default function WalletView({ vm }: { vm: ViewModel }) {
+  const txns = vm.txnRows ?? [];
   return (
     <>
       <div
         style={{
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
-          gap: "16px",
+          gap: "20px",
+          alignItems: "stretch",
         }}
+        className="rd-grid"
       >
+        {/* Balance hero */}
         <section
+          className="rd-card"
           style={{
-            border: "1px solid var(--border)",
-            borderRadius: "14px",
-            background: "linear-gradient(135deg,var(--money),#0a5740)",
+            padding: "26px",
+            border: "none",
             color: "#fff",
-            boxShadow: "0 6px 20px rgba(14,107,79,.22)",
-            padding: "24px",
+            background:
+              "linear-gradient(135deg, var(--money), color-mix(in srgb, var(--money) 58%, #052019))",
             position: "relative",
             overflow: "hidden",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            minHeight: "180px",
           }}
         >
           <div
@@ -32,19 +90,22 @@ export default function WalletView({ vm }: { vm: ViewModel }) {
               fontSize: "11px",
               fontWeight: 600,
               textTransform: "uppercase",
-              letterSpacing: ".06em",
-              color: "#AEB2DA",
+              letterSpacing: ".07em",
+              color: "rgba(255,255,255,.72)",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
             }}
           >
-            Available balance
+            <Wallet size={15} /> Available balance
           </div>
           <div
             style={{
-              fontSize: "42px",
-              fontWeight: 600,
-              fontFamily: "'JetBrains Mono',monospace",
+              fontSize: "44px",
+              fontWeight: 700,
+              fontFamily: MONO,
               letterSpacing: "-.02em",
-              marginTop: "8px",
+              marginTop: "10px",
               lineHeight: 1,
             }}
           >
@@ -53,70 +114,54 @@ export default function WalletView({ vm }: { vm: ViewModel }) {
           <div
             style={{
               fontSize: "13px",
-              color: "#AEB2DA",
-              marginTop: "12px",
+              color: "rgba(255,255,255,.78)",
+              marginTop: "14px",
               display: "flex",
               alignItems: "center",
               gap: "8px",
             }}
           >
             <span
-              style={{
-                width: "7px",
-                height: "7px",
-                borderRadius: "50%",
-                background: "#FAC800",
-              }}
+              style={{ width: "7px", height: "7px", borderRadius: "50%", background: "var(--gold)" }}
             />
             {vm.walletHeldFmt} reserved for in-flight requests
           </div>
-          <div
+          <Wallet
+            size={150}
+            strokeWidth={1}
             style={{
               position: "absolute",
-              right: "-60px",
-              bottom: "-60px",
-              width: "200px",
-              height: "200px",
-              borderRadius: "50%",
-              border: "1px solid rgba(250,200,0,.16)",
+              right: "-30px",
+              bottom: "-36px",
+              color: "rgba(255,255,255,.08)",
             }}
           />
         </section>
+
+        {/* Top up */}
         <section
-          style={{
-            border: "1px solid var(--border)",
-            borderRadius: "14px",
-            background: "var(--surface)",
-            boxShadow: CARD_SHADOW,
-            padding: "22px",
-          }}
+          className="rd-card"
+          style={{ padding: "24px", display: "flex", flexDirection: "column" }}
         >
-          <div style={{ fontSize: "14px", fontWeight: 600 }}>Top up</div>
-          <div
-            style={{
-              fontSize: "12.5px",
-              color: "var(--text-secondary)",
-              marginTop: "4px",
-            }}
-          >
+          <CardHead icon={Plus} title="Top up" mb={6} />
+          <div style={{ fontSize: "12.5px", color: "var(--text-secondary)", marginBottom: "18px" }}>
             Add funds instantly to cover request holds.
           </div>
-          <div style={{ display: "flex", gap: "8px", marginTop: "16px" }}>
+          <div style={{ display: "flex", gap: "8px" }}>
             {(vm.topupQuick ?? []).map((q, i) => (
               <button
                 key={i}
                 onClick={q.onClick}
-                className="hov-primary-border"
+                className="rd-btn hov-primary-border"
                 style={{
                   flex: 1,
-                  height: "42px",
+                  height: "44px",
                   border: "1px solid var(--border)",
-                  borderRadius: "10px",
+                  borderRadius: "11px",
                   background: "var(--surface)",
                   fontSize: "13px",
                   fontWeight: 600,
-                  cursor: "pointer",
-                  fontFamily: "'JetBrains Mono',monospace",
+                  fontFamily: MONO,
                   color: "var(--text)",
                 }}
               >
@@ -129,168 +174,53 @@ export default function WalletView({ vm }: { vm: ViewModel }) {
               value={vm.topupCustom}
               onChange={vm.onTopupInput}
               placeholder="Custom amount"
+              className="rd-input"
               style={{
                 flex: 1,
-                height: "42px",
+                height: "44px",
                 border: "1px solid var(--border)",
-                borderRadius: "10px",
+                borderRadius: "11px",
                 padding: "0 14px",
                 fontSize: "13px",
                 fontFamily: "inherit",
                 outline: "none",
+                background: "var(--surface)",
+                color: "var(--text)",
               }}
             />
             <button
               onClick={vm.onTopupCustom}
+              className="rd-btn rd-btn-primary"
               style={{
-                height: "42px",
-                padding: "0 20px",
+                height: "44px",
+                padding: "0 22px",
                 border: "none",
-                borderRadius: "10px",
+                borderRadius: "11px",
                 background: "var(--primary)",
                 color: "#fff",
                 fontSize: "13px",
                 fontWeight: 600,
-                cursor: "pointer",
                 fontFamily: "inherit",
+                display: "flex",
+                alignItems: "center",
+                gap: "7px",
               }}
             >
-              Add
+              <Plus size={15} /> Add
             </button>
           </div>
         </section>
       </div>
 
-      <section style={{ marginTop: "24px" }}>
-        <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "6px" }}>
-          Transactions
-        </div>
-        <div
-          style={{
-            border: "1px solid var(--border)",
-            borderRadius: "14px",
-            background: "var(--surface)",
-            boxShadow: CARD_SHADOW,
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "14px",
-              padding: "0 18px",
-              height: "40px",
-              borderBottom: "1px solid var(--border)",
-              fontSize: "11px",
-              fontWeight: 600,
-              textTransform: "uppercase",
-              letterSpacing: ".05em",
-              color: "var(--text-muted)",
-            }}
-          >
-            <span style={{ width: "130px" }}>Type</span>
-            <span style={{ flex: 1 }}>Reference</span>
-            <span style={{ width: "110px", textAlign: "right" }}>Amount</span>
-            <span style={{ width: "120px", textAlign: "right" }}>Balance</span>
-            <span style={{ width: "96px", textAlign: "right" }}>When</span>
-          </div>
-          {(vm.txnRows ?? []).map((t, i) => (
-            <div
-              key={i}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "14px",
-                padding: "0 18px",
-                height: "50px",
-                borderBottom: "1px solid var(--divider)",
-              }}
-            >
-              <span style={{ width: "130px" }}>
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "7px",
-                    fontSize: "11.5px",
-                    fontWeight: 500,
-                    color: t.tagText,
-                    background: t.tagBg,
-                    borderRadius: "999px",
-                    padding: "3px 10px",
-                  }}
-                >
-                  <span
-                    style={{
-                      width: "6px",
-                      height: "6px",
-                      borderRadius: "50%",
-                      background: t.tagDot,
-                    }}
-                  />
-                  {t.type}
-                </span>
-              </span>
-              <span
-                style={{
-                  flex: 1,
-                  fontSize: "12.5px",
-                  color: "var(--text-secondary)",
-                  fontFamily: "'JetBrains Mono',monospace",
-                }}
-              >
-                {t.ref}
-              </span>
-              <span
-                style={{
-                  width: "110px",
-                  textAlign: "right",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  fontFamily: "'JetBrains Mono',monospace",
-                  color: t.amtColor,
-                }}
-              >
-                {t.amount}
-              </span>
-              <span
-                style={{
-                  width: "120px",
-                  textAlign: "right",
-                  fontSize: "12.5px",
-                  fontFamily: "'JetBrains Mono',monospace",
-                  color: "var(--text-secondary)",
-                }}
-              >
-                {t.balance}
-              </span>
-              <span
-                style={{
-                  width: "96px",
-                  textAlign: "right",
-                  fontSize: "12px",
-                  color: "var(--text-muted)",
-                }}
-              >
-                {t.time}
-              </span>
-            </div>
-          ))}
-          {vm.txnEmpty && (
-            <div
-              style={{
-                padding: "40px",
-                textAlign: "center",
-                color: "var(--text-muted)",
-                fontSize: "13px",
-              }}
-            >
-              No transactions yet.
-            </div>
-          )}
-        </div>
-      </section>
+      <div style={{ marginTop: "24px" }}>
+        <DataTable
+          title="Transactions"
+          titleIcon={Activity}
+          columns={TXN_COLUMNS}
+          rows={txns}
+          empty={vm.txnEmpty ? <EmptyState icon={Inbox}>No transactions yet.</EmptyState> : null}
+        />
+      </div>
     </>
   );
 }
