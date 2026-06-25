@@ -543,6 +543,12 @@ export interface ViewModel {
   d_onMarkPaid?: ClickHandler;
   d_govRef?: string;
   d_generatedAt?: string;
+  /** Pricing breakdown block (detail right rail). */
+  d_pr_received?: string;
+  d_pr_vendor?: string;
+  d_pr_profit?: string;
+  d_pr_margin?: string;
+  d_pr_taxKnown?: boolean;
   d_onView?: ClickHandler;
   d_onDownload?: ClickHandler;
   d_failReason?: string;

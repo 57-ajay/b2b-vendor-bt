@@ -1182,6 +1182,18 @@ export default class DriverPanel extends React.Component<
       out.ac_failed = cur.status === "FAILED";
       out.ac_reconciling = cur.status === "RECONCILING";
       out.d_priceFmt = fmtMoney(price);
+      // Pricing breakdown: the customer pays the government tax plus our
+      // per-request service fee; we remit the tax to the portal and keep the
+      // fee as profit. Totals finalise once the tax has been calculated.
+      const prTax = cur.taxAmount || 0;
+      const prTaxKnown = prTax > 0;
+      out.d_pr_taxKnown = prTaxKnown;
+      out.d_pr_received = prTaxKnown ? fmtMoney(prTax + price) : "—";
+      out.d_pr_vendor = prTaxKnown ? fmtMoney(prTax) : "—";
+      out.d_pr_profit = fmtMoney(price);
+      out.d_pr_margin = prTaxKnown
+        ? Math.round((price / (prTax + price)) * 100) + "% margin"
+        : "Service fee";
       const covers = s.wallet
         ? s.wallet.balance - s.wallet.heldAmount >= price
         : true;
