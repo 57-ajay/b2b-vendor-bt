@@ -28,6 +28,7 @@ import type {
   Wallet,
 } from "@/types";
 
+import Commercials from "@/components/Commercials";
 import ConfirmModal from "@/components/ConfirmModal";
 import Dashboard from "@/components/Dashboard";
 import Login from "@/components/Login";
@@ -82,6 +83,9 @@ interface DriverPanelState {
   btAutomation: boolean;
   btSaved: Record<string, boolean>;
   btData: Record<string, BtStateCfg>;
+  commMode: "percent" | "fixed";
+  commPercent: string;
+  commFixed: string;
   _copied?: boolean;
 }
 
@@ -154,6 +158,9 @@ export default class DriverPanel extends React.Component<
       pricingOpen: false,
       pricingSection: "border-tax",
       priceDraft: {},
+      commMode: "percent",
+      commPercent: "15",
+      commFixed: "150",
       btSelState: "Andhra Pradesh",
       btSearch: "",
       btAutomation: true,
@@ -601,6 +608,13 @@ export default class DriverPanel extends React.Component<
     const reqs = s.requests;
     const cur = reqs.find((r) => r.requestId === s.currentId);
     const price = s.settings ? s.settings.pricePerRequest : 150;
+    // Vendor commission on border-tax payments (drives the request pricing
+    // breakdown). Either a percentage of the government tax, or a flat amount.
+    const commIsPercent = s.commMode === "percent";
+    const commPct = parseFloat(s.commPercent) || 0;
+    const commFix = parseInt(s.commFixed, 10) || 0;
+    const commissionFor = (tax: number) =>
+      commIsPercent ? Math.round((tax * commPct) / 100) : commFix;
 
     // counts
     const completedToday = reqs.filter((r) => r.status === "COMPLETED").length;
@@ -647,6 +661,11 @@ export default class DriverPanel extends React.Component<
       ),
       pricing: svg(
         E("text", { x: 9, y: 13.5, textAnchor: "middle", fontSize: 14, fontWeight: 700, fill: "currentColor", fontFamily: "Poppins, sans-serif" }, "₹"),
+      ),
+      commercials: svg(
+        E("circle", { cx: 5.5, cy: 5.5, r: 2.2, stroke: "currentColor", strokeWidth: 1.6, fill: "none" }),
+        E("circle", { cx: 12.5, cy: 12.5, r: 2.2, stroke: "currentColor", strokeWidth: 1.6, fill: "none" }),
+        E("line", { x1: 13.5, y1: 4, x2: 4, y2: 13.5, stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round" }),
       ),
       borderTax: svg(
         E("rect", { x: 2, y: 2, width: 14, height: 14, rx: 2, stroke: "currentColor", strokeWidth: 1.6, fill: "none" }),
@@ -768,6 +787,11 @@ export default class DriverPanel extends React.Component<
       item(ICON.wallet, "Wallet", s.route === "wallet", () => this.go("wallet")),
     );
     navItems.push(
+      item(ICON.commercials, "Commercials", s.route === "commercials", () =>
+        this.go("commercials"),
+      ),
+    );
+    navItems.push(
       item(ICON.receipts, "Receipts", s.route === "receipts", () =>
         this.go("receipts"),
       ),
@@ -779,6 +803,7 @@ export default class DriverPanel extends React.Component<
       requests: ["Border Tax Requests", "All vehicle tax requests"],
       detail: ["Request detail", "Live processing"],
       wallet: ["Wallet", "Balance & transactions"],
+      commercials: ["Commercials", "Commission on border-tax payments"],
       receipts: ["Receipts", "Generated tax receipts"],
       settings: ["Settings", "Account & white-label"],
       pricing: ["Pricing", "Service rates configuration"],
@@ -796,6 +821,7 @@ export default class DriverPanel extends React.Component<
       routeIsReceipts: s.route === "receipts",
       routeIsSettings: s.route === "settings",
       routeIsPricing: s.route === "pricing",
+      routeIsCommercials: s.route === "commercials",
       // login
       loginEmail: s.loginEmail,
       loginPass: s.loginPass,
@@ -1184,18 +1210,22 @@ export default class DriverPanel extends React.Component<
       out.ac_failed = cur.status === "FAILED";
       out.ac_reconciling = cur.status === "RECONCILING";
       out.d_priceFmt = fmtMoney(price);
-      // Pricing breakdown: the customer pays the government tax plus our
-      // per-request service fee; we remit the tax to the portal and keep the
-      // fee as profit. Totals finalise once the tax has been calculated.
+      // Pricing breakdown: the customer pays the government tax plus the vendor
+      // commission (configured on Commercials); we remit the tax and keep the
+      // commission as profit. Percentage commissions resolve once tax is known.
       const prTax = cur.taxAmount || 0;
       const prTaxKnown = prTax > 0;
+      const prComm = commissionFor(prTax);
+      const prCommKnown = commIsPercent ? prTaxKnown : true;
       out.d_pr_taxKnown = prTaxKnown;
-      out.d_pr_received = prTaxKnown ? fmtMoney(prTax + price) : "—";
+      out.d_pr_received = prTaxKnown ? fmtMoney(prTax + prComm) : "—";
       out.d_pr_vendor = prTaxKnown ? fmtMoney(prTax) : "—";
-      out.d_pr_profit = fmtMoney(price);
-      out.d_pr_margin = prTaxKnown
-        ? Math.round((price / (prTax + price)) * 100) + "% margin"
-        : "Service fee";
+      out.d_pr_profit = prCommKnown ? fmtMoney(prComm) : "—";
+      out.d_pr_margin = commIsPercent
+        ? commPct + "% commission"
+        : prTaxKnown
+          ? Math.round((prComm / (prTax + prComm)) * 100) + "% margin"
+          : "Flat commission";
       const covers = s.wallet
         ? s.wallet.balance - s.wallet.heldAmount >= price
         : true;
@@ -1365,6 +1395,28 @@ export default class DriverPanel extends React.Component<
         onDownload: () =>
           this._toast("Downloading", "Receipt PDF download started", "#107A52"),
       }));
+    }
+
+    // ---- commercials ----
+    if (s.route === "commercials") {
+      out.comm_isPercent = commIsPercent;
+      out.comm_percent = s.commPercent;
+      out.comm_fixed = s.commFixed;
+      out.comm_onModePercent = () => this.setState({ commMode: "percent" });
+      out.comm_onModeFixed = () => this.setState({ commMode: "fixed" });
+      out.comm_onPercent = (e) =>
+        this.setState({ commPercent: e.target.value.replace(/[^0-9.]/g, "") });
+      out.comm_onFixed = (e) =>
+        this.setState({ commFixed: e.target.value.replace(/[^0-9]/g, "") });
+      // Live example using a representative border-tax amount (latest known tax).
+      const egTax = reqs.find((r) => (r.taxAmount || 0) > 0)?.taxAmount || 500;
+      const egComm = commissionFor(egTax);
+      out.comm_egTax = fmtMoney(egTax);
+      out.comm_egCommission = fmtMoney(egComm);
+      out.comm_egTotal = fmtMoney(egTax + egComm);
+      out.comm_egRate = commIsPercent
+        ? commPct + "% of government tax"
+        : "Flat " + fmtMoney(commFix) + " per request";
     }
 
     // ---- pricing ----
@@ -1707,6 +1759,7 @@ export default class DriverPanel extends React.Component<
                   {vals.routeIsRequests && <Requests vm={vals} />}
                   {vals.routeIsDetail && <RequestDetail vm={vals} />}
                   {vals.routeIsWallet && <WalletView vm={vals} />}
+                  {vals.routeIsCommercials && <Commercials vm={vals} />}
                   {vals.routeIsReceipts && <Receipts vm={vals} />}
                   {vals.routeIsSettings && <SettingsView vm={vals} />}
                   {vals.routeIsPricing && <Pricing vm={vals} />}

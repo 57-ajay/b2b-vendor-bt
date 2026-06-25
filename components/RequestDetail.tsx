@@ -841,7 +841,7 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
               iconTone="var(--money)"
               iconBg="var(--money-tint)"
               label="Received from customer"
-              sub="Tax + service fee"
+              sub="Tax + commission"
               value={vm.d_pr_received}
             />
             <div style={{ height: "1px", background: "var(--divider)" }} />

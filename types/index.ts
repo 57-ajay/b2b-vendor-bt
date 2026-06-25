@@ -169,7 +169,8 @@ export type Route =
   | "wallet"
   | "receipts"
   | "settings"
-  | "pricing";
+  | "pricing"
+  | "commercials";
 
 export type PricingSection = "border-tax" | "state-tax" | "rc-mobile";
 export type SettingsTabKey = "profile" | "branding" | "pricing" | "notif";
@@ -421,6 +422,7 @@ export interface ViewModel {
   routeIsReceipts: boolean;
   routeIsSettings: boolean;
   routeIsPricing: boolean;
+  routeIsCommercials: boolean;
 
   /* login */
   loginEmail: string;
@@ -567,6 +569,19 @@ export interface ViewModel {
   onReceiptSearch?: InputHandler;
   receiptsEmpty?: boolean;
   receiptRows?: ReceiptRow[];
+
+  /* commercials — vendor commission model on border-tax payments */
+  comm_isPercent?: boolean;
+  comm_percent?: string;
+  comm_fixed?: string;
+  comm_onModePercent?: ClickHandler;
+  comm_onModeFixed?: ClickHandler;
+  comm_onPercent?: InputHandler;
+  comm_onFixed?: InputHandler;
+  comm_egTax?: string;
+  comm_egCommission?: string;
+  comm_egTotal?: string;
+  comm_egRate?: string;
 
   /* pricing */
   pr_title?: string;
