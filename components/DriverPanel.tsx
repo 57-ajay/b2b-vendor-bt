@@ -738,10 +738,12 @@ export default class DriverPanel extends React.Component<
       item(ICON.pricing, "Pricing", onPricing, () =>
         this.setState((p) => ({
           pricingOpen: !(p.pricingOpen || p.route === "pricing"),
-        })), { caret: caretEl(pOpen) },
+        })), { caret: s.sidebarCollapsed ? "" : caretEl(pOpen) },
       ),
     ];
-    if (pOpen) {
+    // The Pricing sub-tree is only rendered when the rail is expanded — at 72px
+    // the indented children have no room and would spill outside the rail.
+    if (pOpen && !s.sidebarCollapsed) {
       navItems.push(
         item(ICON.borderTax, "Border Tax", childActive("border-tax"), () =>
           this.goPricing("border-tax"), { indent: true },
