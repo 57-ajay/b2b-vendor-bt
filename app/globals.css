@@ -283,6 +283,7 @@ option {
   border-radius: 16px;
   background: var(--surface);
   box-shadow:
+    inset 0 1px 0 var(--card-edge),
     0 1px 2px rgba(2, 6, 111, 0.04),
     0 12px 32px -20px rgba(2, 6, 111, 0.22);
   animation: fadeUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -294,6 +295,7 @@ option {
 .rd-card:hover {
   border-color: color-mix(in srgb, var(--primary) 14%, var(--border));
   box-shadow:
+    inset 0 1px 0 var(--card-edge),
     0 1px 2px rgba(2, 6, 111, 0.05),
     0 18px 40px -22px rgba(2, 6, 111, 0.3);
 }
@@ -336,7 +338,7 @@ option {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
-  align-items: start;
+  align-items: stretch;
 }
 .rd-span {
   grid-column: 1 / -1;

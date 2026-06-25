@@ -426,7 +426,12 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
       {/* ---------------------------------------------------------- header */}
       <section
         className="rd-card"
-        style={{ padding: "22px 24px", marginBottom: "20px" }}
+        style={{
+          padding: "22px 24px",
+          marginBottom: "20px",
+          background:
+            "linear-gradient(180deg, color-mix(in srgb, var(--primary) 5%, var(--surface)) 0%, var(--surface) 62%)",
+        }}
       >
         <div
           style={{
@@ -498,21 +503,46 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
       {/* ------------------------------------------------------ dashboard grid */}
       <div className="rd-grid">
         {/* Customer information */}
-        <section className="rd-card" style={{ padding: "24px", animationDelay: ".04s" }}>
+        <section
+          className="rd-card"
+          style={{
+            padding: "24px",
+            animationDelay: ".04s",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           <CardHead icon={FileText} title="Customer information" />
-          <div className="rd-fields">
-            {fields.length === 0 ? (
-              <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>
-                No submission details.
-              </div>
-            ) : (
-              fields.map((f, i) => <FieldCell key={i} f={f} />)
-            )}
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
+          >
+            <div className="rd-fields">
+              {fields.length === 0 ? (
+                <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>
+                  No submission details.
+                </div>
+              ) : (
+                fields.map((f, i) => <FieldCell key={i} f={f} />)
+              )}
+            </div>
           </div>
         </section>
 
         {/* Processing card */}
-        <section className="rd-card" style={{ padding: "24px", animationDelay: ".08s" }}>
+        <section
+          className="rd-card"
+          style={{
+            padding: "24px",
+            animationDelay: ".08s",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           {/* PENDING */}
           {vm.ac_pending && (
             <>
@@ -661,7 +691,7 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
 
           {/* PROCESSING */}
           {vm.ac_processing && (
-            <div style={CENTERED}>
+            <div style={{ ...CENTERED, flex: 1, justifyContent: "center" }}>
               <span
                 style={{
                   width: "44px",
@@ -780,7 +810,7 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
 
           {/* RECONCILING */}
           {vm.ac_reconciling && (
-            <div style={CENTERED}>
+            <div style={{ ...CENTERED, flex: 1, justifyContent: "center" }}>
               <span
                 style={{
                   width: "44px",
@@ -953,14 +983,30 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
         </section>
 
         {/* Pricing breakdown */}
-        <section className="rd-card" style={{ padding: "24px", animationDelay: ".16s" }}>
+        <section
+          className="rd-card"
+          style={{
+            padding: "24px",
+            animationDelay: ".16s",
+            display: "flex",
+            flexDirection: "column",
+          }}
+        >
           <CardHead
             icon={TrendingUp}
             title="Pricing breakdown"
             tint="var(--money)"
             tintBg="var(--money-tint)"
           />
-          <div style={{ display: "flex", flexDirection: "column" }}>
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "center",
+            }}
+          >
+            <div style={{ display: "flex", flexDirection: "column" }}>
             <PriceRow
               icon={ArrowDownLeft}
               iconTone="var(--money)"
@@ -1028,6 +1074,7 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
             >
               {vm.d_pr_profit}
             </span>
+          </div>
           </div>
         </section>
 
