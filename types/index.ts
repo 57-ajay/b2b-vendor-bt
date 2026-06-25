@@ -263,6 +263,8 @@ export interface RequestRow {
   vehicle: string;
   route: string;
   journey: string;
+  commission: string;
+  earned: string;
   statusLabel: string;
   pillText: string;
   pillBg: string;

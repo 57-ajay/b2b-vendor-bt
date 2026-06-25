@@ -22,7 +22,7 @@ const ELLIPSIS: React.CSSProperties = {
 const COLUMNS: Column<RequestRow>[] = [
   {
     label: "Request",
-    width: 92,
+    width: 84,
     cell: (r) => (
       <span style={{ fontFamily: MONO, fontSize: "12px", color: "var(--text-secondary)" }}>
         {r.shortId}
@@ -31,7 +31,7 @@ const COLUMNS: Column<RequestRow>[] = [
   },
   {
     label: "Vehicle",
-    width: 122,
+    width: 114,
     cell: (r) => (
       <span
         style={{
@@ -73,14 +73,14 @@ const COLUMNS: Column<RequestRow>[] = [
   },
   {
     label: "Journey",
-    width: 104,
+    width: 92,
     cell: (r) => (
       <span style={{ fontSize: "12.5px", color: "var(--text-secondary)" }}>{r.journey}</span>
     ),
   },
   {
     label: "Status",
-    width: 132,
+    width: 120,
     cell: (r) => (
       <StatusPill
         text={r.statusLabel}
@@ -92,13 +92,38 @@ const COLUMNS: Column<RequestRow>[] = [
     ),
   },
   {
+    label: "Commission",
+    width: 96,
+    cell: (r) => (
+      <span style={{ fontFamily: MONO, fontSize: "12.5px", color: "var(--text-secondary)" }}>
+        {r.commission}
+      </span>
+    ),
+  },
+  {
+    label: "Earned",
+    width: 88,
+    cell: (r) => (
+      <span
+        style={{
+          fontFamily: MONO,
+          fontSize: "13px",
+          fontWeight: 600,
+          color: r.earned === "—" ? "var(--text-muted)" : "var(--money)",
+        }}
+      >
+        {r.earned}
+      </span>
+    ),
+  },
+  {
     label: "Created",
-    width: 78,
+    width: 70,
     cell: (r) => <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>{r.time}</span>,
   },
   {
     label: "Actions",
-    width: 92,
+    width: 84,
     align: "right",
     cell: (r) => (
       <>

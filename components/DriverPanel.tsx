@@ -1080,11 +1080,19 @@ export default class DriverPanel extends React.Component<
         const p = pill(r.status);
         const start = r.status === "PENDING";
         const retry = r.status === "FAILED";
+        const tax = r.taxAmount || 0;
+        const comm = commissionFor(tax);
         return {
           shortId: r.requestId,
           vehicle: r.vehicleNumber,
           route: r.state + " → " + r.border,
           journey: r.journeyDate,
+          commission: commIsPercent
+            ? commPct + "%"
+            : tax > 0
+              ? Math.round((comm / tax) * 100) + "%"
+              : "—",
+          earned: (commIsPercent ? tax > 0 : true) ? fmtMoney(comm) : "—",
           ...p,
           dotAnim:
             r.status === "AWAITING_PAYMENT"
