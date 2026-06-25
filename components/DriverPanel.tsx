@@ -1408,8 +1408,11 @@ export default class DriverPanel extends React.Component<
       out.comm_fixed = s.commFixed;
       out.comm_onModePercent = () => this.setState({ commMode: "percent" });
       out.comm_onModeFixed = () => this.setState({ commMode: "fixed" });
-      out.comm_onPercent = (e) =>
-        this.setState({ commPercent: e.target.value.replace(/[^0-9.]/g, "") });
+      out.comm_onPercent = (e) => {
+        let v = e.target.value.replace(/[^0-9.]/g, "");
+        if (parseFloat(v) > 100) v = "100";
+        this.setState({ commPercent: v });
+      };
       out.comm_onFixed = (e) =>
         this.setState({ commFixed: e.target.value.replace(/[^0-9]/g, "") });
       // Live example using a representative border-tax amount (latest known tax).
