@@ -10,6 +10,45 @@ const SECTION_LABEL: React.CSSProperties = {
   letterSpacing: ".06em",
   color: "var(--text-muted)",
 };
+const MONO = "'JetBrains Mono',monospace";
+const PR_ROW: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  padding: "10px 0",
+};
+const PR_LABEL: React.CSSProperties = {
+  fontSize: "12.5px",
+  fontWeight: 500,
+  color: "var(--text-secondary)",
+};
+const PR_SUB: React.CSSProperties = {
+  fontSize: "11px",
+  color: "var(--text-muted)",
+  marginTop: "2px",
+};
+const PR_VAL: React.CSSProperties = {
+  fontSize: "13.5px",
+  fontWeight: 600,
+  fontFamily: MONO,
+  color: "var(--text)",
+};
+/** Small trending-up glyph used in the pricing breakdown. */
+const TrendUp = ({ size = 15 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2.2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="3 17 9 11 13 15 21 7" />
+    <polyline points="15 7 21 7 21 13" />
+  </svg>
+);
 
 /** Request detail route — ported 1:1 from the source template (sc-if routeIsDetail). */
 export default function RequestDetail({ vm }: { vm: ViewModel }) {
@@ -264,18 +303,25 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
           </section>
         </div>
 
-        {/* RIGHT: action card */}
-        <section
+        {/* RIGHT: action card + pricing breakdown */}
+        <div
           style={{
-            border: "1px solid var(--border)",
-            borderRadius: "14px",
-            background: "var(--surface)",
-            boxShadow: CARD_SHADOW,
-            padding: "22px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "16px",
             position: "sticky",
             top: "20px",
           }}
         >
+          <section
+            style={{
+              border: "1px solid var(--border)",
+              borderRadius: "14px",
+              background: "var(--surface)",
+              boxShadow: CARD_SHADOW,
+              padding: "22px",
+            }}
+          >
           {/* PENDING */}
           {vm.ac_pending && (
             <>
@@ -873,7 +919,135 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
               </button>
             </>
           )}
-        </section>
+          </section>
+
+          {/* Pricing breakdown — what the customer pays, what we remit, profit */}
+          <section
+            style={{
+              border: "1px solid var(--border)",
+              borderRadius: "14px",
+              background: "var(--surface)",
+              boxShadow: CARD_SHADOW,
+              padding: "18px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "9px",
+                marginBottom: "12px",
+              }}
+            >
+              <span
+                style={{
+                  width: "24px",
+                  height: "24px",
+                  flex: "none",
+                  borderRadius: "7px",
+                  background: "var(--money-tint)",
+                  color: "var(--money)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <TrendUp size={13} />
+              </span>
+              <span style={SECTION_LABEL}>Pricing breakdown</span>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column" }}>
+              <div style={PR_ROW}>
+                <div>
+                  <div style={PR_LABEL}>Received from customer</div>
+                  <div style={PR_SUB}>Tax + service fee</div>
+                </div>
+                <span style={PR_VAL}>{vm.d_pr_received}</span>
+              </div>
+              <div
+                style={{
+                  ...PR_ROW,
+                  borderTop: "1px solid var(--surface-inset)",
+                }}
+              >
+                <div>
+                  <div style={PR_LABEL}>Paid by vendor</div>
+                  <div style={PR_SUB}>Remitted to government</div>
+                </div>
+                <span style={{ ...PR_VAL, color: "var(--text-secondary)" }}>
+                  {vm.d_pr_vendor}
+                </span>
+              </div>
+            </div>
+
+            <div
+              style={{
+                marginTop: "14px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "13px 15px",
+                borderRadius: "12px",
+                background: "var(--money-tint)",
+                border:
+                  "1px solid color-mix(in srgb, var(--money) 24%, transparent)",
+              }}
+            >
+              <div
+                style={{ display: "flex", alignItems: "center", gap: "11px" }}
+              >
+                <span
+                  style={{
+                    width: "30px",
+                    height: "30px",
+                    flex: "none",
+                    borderRadius: "9px",
+                    background:
+                      "color-mix(in srgb, var(--money) 16%, transparent)",
+                    color: "var(--money)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <TrendUp size={15} />
+                </span>
+                <div>
+                  <div
+                    style={{
+                      fontSize: "12.5px",
+                      fontWeight: 600,
+                      color: "var(--money)",
+                    }}
+                  >
+                    Net profit
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "11px",
+                      color: "var(--money)",
+                      opacity: 0.75,
+                    }}
+                  >
+                    {vm.d_pr_margin}
+                  </div>
+                </div>
+              </div>
+              <span
+                style={{
+                  fontSize: "20px",
+                  fontWeight: 700,
+                  fontFamily: MONO,
+                  color: "var(--money)",
+                  letterSpacing: "-.01em",
+                }}
+              >
+                {vm.d_pr_profit}
+              </span>
+            </div>
+          </section>
+        </div>
       </div>
     </>
   );
