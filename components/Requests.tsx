@@ -80,7 +80,7 @@ const COLUMNS: Column<RequestRow>[] = [
   },
   {
     label: "Status",
-    width: 120,
+    width: 158,
     cell: (r) => (
       <StatusPill
         text={r.statusLabel}
