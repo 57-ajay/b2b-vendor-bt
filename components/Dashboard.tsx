@@ -1,11 +1,42 @@
 "use client";
+import {
+  BarChart3,
+  CheckCircle2,
+  ChevronRight,
+  CircleAlert,
+  Clock,
+  PieChart,
+} from "lucide-react";
+
 import GrowthChart from "@/components/GrowthChart";
+import {
+  BTN_SM,
+  CardHead,
+  EmptyState,
+  MONO,
+  StatusPill,
+} from "@/components/premium";
 import type { ViewModel } from "@/types";
 
-const CARD_SHADOW =
-  "0 1px 1px rgba(2,6,111,.04),0 10px 28px -14px rgba(2,6,111,.14)";
+const LIST_ROW: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+  padding: "0 20px",
+  height: "58px",
+  borderTop: "1px solid var(--divider)",
+};
+const ELLIPSIS: React.CSSProperties = {
+  flex: 1,
+  minWidth: 0,
+  overflow: "hidden",
+  whiteSpace: "nowrap",
+  textOverflow: "ellipsis",
+  fontSize: "12.5px",
+  color: "var(--text-secondary)",
+};
 
-/** Dashboard route — ported 1:1 from the source template (sc-if routeIsDashboard). */
+/** Dashboard route — visual redesign; metrics, chart and lists logic unchanged. */
 export default function Dashboard({
   vm,
   requestsLength,
@@ -15,44 +46,20 @@ export default function Dashboard({
 }) {
   return (
     <>
+      {/* Metric stat cards */}
       <div
         style={{
-          position: "relative",
-          border: "1px solid var(--border)",
-          borderRadius: "14px",
-          boxShadow: CARD_SHADOW,
-          display: "flex",
-          height: "92px",
-          overflow: "hidden",
-          background: "linear-gradient(180deg,var(--surface),var(--surface-inset))",
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(190px, 1fr))",
+          gap: "16px",
         }}
       >
-        <span
-          style={{
-            position: "absolute",
-            top: 0,
-            left: "24px",
-            right: "24px",
-            height: "1px",
-            background:
-              "linear-gradient(90deg,transparent,rgba(250,200,0,.5),transparent)",
-          }}
-        />
         {(vm.metrics ?? []).map((m, i) => (
           <div
             key={i}
             onClick={m.onClick}
-            className={m.hover ? "hov-inset" : undefined}
-            style={{
-              flex: 1,
-              padding: "18px 22px",
-              borderRight: "1px solid var(--divider)",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "center",
-              cursor: m.cursor,
-              transition: "background .15s",
-            }}
+            className="rd-card"
+            style={{ padding: "18px 20px", cursor: m.cursor, animationDelay: `${0.03 * i}s` }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
               <span
@@ -60,7 +67,7 @@ export default function Dashboard({
                   fontSize: "10.5px",
                   fontWeight: 600,
                   textTransform: "uppercase",
-                  letterSpacing: ".08em",
+                  letterSpacing: ".07em",
                   color: "var(--text-muted)",
                 }}
               >
@@ -70,88 +77,73 @@ export default function Dashboard({
             </div>
             <div
               style={{
-                fontSize: "26px",
+                fontSize: "28px",
                 fontWeight: 600,
-                fontFamily: "'JetBrains Mono',monospace",
+                fontFamily: MONO,
                 color: m.color,
                 lineHeight: 1.05,
-                marginTop: "6px",
+                marginTop: "8px",
                 letterSpacing: "-.02em",
               }}
             >
               {m.value}
             </div>
-            <div
-              style={{
-                fontSize: "11.5px",
-                color: "var(--text-muted)",
-                marginTop: "2px",
-              }}
-            >
+            <div style={{ fontSize: "11.5px", color: "var(--text-muted)", marginTop: "3px" }}>
               {m.sub}
             </div>
           </div>
         ))}
       </div>
 
+      {/* Today at a glance */}
       {vm.dashShowGlance && (
-        <section
-          style={{
-            border: "1px solid var(--border)",
-            borderRadius: "14px",
-            background: "var(--surface)",
-            boxShadow: CARD_SHADOW,
-            padding: "16px 20px",
-            marginTop: "16px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <div style={{ fontSize: "14px", fontWeight: 600 }}>
-              Today at a glance
-            </div>
-            <button
-              onClick={vm.onToggleGlance}
-              style={{
-                border: "none",
-                background: "transparent",
-                color: "var(--text-muted)",
-                fontSize: "12px",
-                cursor: "pointer",
-                fontFamily: "inherit",
-              }}
-            >
-              Hide
-            </button>
-          </div>
+        <section className="rd-card" style={{ padding: "20px 22px", marginTop: "20px" }}>
+          <CardHead
+            icon={PieChart}
+            title="Today at a glance"
+            mb={16}
+            aside={
+              <button
+                onClick={vm.onToggleGlance}
+                className="rd-btn"
+                style={{
+                  border: "1px solid var(--border)",
+                  background: "var(--surface)",
+                  color: "var(--text-secondary)",
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                  height: "30px",
+                  padding: "0 12px",
+                  borderRadius: "9px",
+                }}
+              >
+                Hide
+              </button>
+            }
+          />
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: "36px",
-              marginTop: "10px",
+              flexWrap: "wrap",
             }}
           >
             <div style={{ flex: "none" }}>{vm.donutEl}</div>
             <div
               style={{
                 flex: 1,
+                minWidth: "260px",
                 display: "grid",
                 gridTemplateColumns: "1fr 1fr",
-                gap: "10px 32px",
+                gap: "12px 32px",
                 maxWidth: "520px",
               }}
             >
               {(vm.donutLegend ?? []).map((g, i) => (
-                <div
-                  key={i}
-                  style={{ display: "flex", alignItems: "center", gap: "9px" }}
-                >
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: "9px" }}>
                   <span
                     style={{
                       width: "9px",
@@ -161,22 +153,10 @@ export default function Dashboard({
                       flex: "none",
                     }}
                   />
-                  <span
-                    style={{
-                      fontSize: "12.5px",
-                      color: "var(--text-secondary)",
-                      flex: 1,
-                    }}
-                  >
+                  <span style={{ fontSize: "12.5px", color: "var(--text-secondary)", flex: 1 }}>
                     {g.label}
                   </span>
-                  <span
-                    style={{
-                      fontSize: "13px",
-                      fontWeight: 600,
-                      fontFamily: "'JetBrains Mono',monospace",
-                    }}
-                  >
+                  <span style={{ fontSize: "13px", fontWeight: 600, fontFamily: MONO }}>
                     {g.count}
                   </span>
                 </div>
@@ -186,28 +166,18 @@ export default function Dashboard({
         </section>
       )}
 
-      <section
-        style={{
-          border: "1px solid var(--border)",
-          borderRadius: "14px",
-          background: "var(--surface)",
-          boxShadow: CARD_SHADOW,
-          padding: "18px 20px",
-          marginTop: "24px",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "baseline",
-            justifyContent: "space-between",
-          }}
-        >
-          <div style={{ fontSize: "14px", fontWeight: 600 }}>Monthly report</div>
-          <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-            Requests per day · {vm.monthLabel}
-          </div>
-        </div>
+      {/* Monthly report */}
+      <section className="rd-card" style={{ padding: "20px 22px", marginTop: "24px" }}>
+        <CardHead
+          icon={BarChart3}
+          title="Monthly report"
+          mb={10}
+          aside={
+            <span style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+              Requests per day · {vm.monthLabel}
+            </span>
+          }
+        />
         <GrowthChart theme={vm.theme} requestsLength={requestsLength} />
         <div style={{ position: "relative", height: "16px", marginTop: "6px" }}>
           {(vm.monthTicks ?? []).map((t, i) => (
@@ -228,249 +198,110 @@ export default function Dashboard({
         </div>
       </section>
 
-      <div style={{ marginTop: "24px" }}>
-        <section
-          style={{
-            border: "1px solid var(--border)",
-            borderRadius: "14px",
-            background: "var(--surface)",
-            boxShadow: CARD_SHADOW,
-            display: "flex",
-            flexDirection: "column",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "16px 18px 12px",
-            }}
-          >
-            <div style={{ fontSize: "14px", fontWeight: 600 }}>
-              Needs attention
-            </div>
+      {/* Needs attention */}
+      <section
+        className="rd-card"
+        style={{ marginTop: "24px", padding: 0, overflow: "hidden" }}
+      >
+        <div style={{ padding: "18px 20px 14px" }}>
+          <CardHead
+            icon={CircleAlert}
+            title="Needs attention"
+            tint="var(--warn)"
+            tintBg="var(--warn-tint)"
+            mb={0}
+            aside={
+              <span
+                style={{
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  color: "var(--primary)",
+                  background: "var(--primary-tint)",
+                  borderRadius: "999px",
+                  padding: "4px 11px",
+                  fontFamily: MONO,
+                }}
+              >
+                {vm.attentionCount} open
+              </span>
+            }
+          />
+        </div>
+        {(vm.attentionRows ?? []).map((r, i) => (
+          <div key={i} style={{ ...LIST_ROW, animation: r.anim }}>
             <span
               style={{
-                fontSize: "11px",
-                fontWeight: 600,
-                color: "var(--primary)",
-                background: "var(--primary-tint)",
-                borderRadius: "999px",
-                padding: "3px 10px",
-                fontFamily: "'JetBrains Mono',monospace",
+                width: "8px",
+                height: "8px",
+                flex: "none",
+                borderRadius: "50%",
+                background: r.dot,
+                animation: r.dotAnim,
               }}
-            >
-              {vm.attentionCount} open
+            />
+            <span style={{ fontFamily: MONO, fontSize: "13px", fontWeight: 500, width: "108px" }}>
+              {r.vehicle}
             </span>
-          </div>
-          <div style={{ flex: 1 }}>
-            {(vm.attentionRows ?? []).map((r, i) => (
-              <div
-                key={i}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  padding: "0 18px",
-                  height: "54px",
-                  borderTop: "1px solid var(--divider)",
-                  animation: r.anim,
-                }}
+            <span style={ELLIPSIS}>{r.route}</span>
+            <StatusPill text={r.statusLabel} bg={r.pillBg} color={r.pillText} />
+            {r.isStart && (
+              <button
+                onClick={r.onAction}
+                className="rd-btn rd-btn-primary"
+                style={{ ...BTN_SM, border: "none", background: "var(--primary)", color: "#fff" }}
               >
-                <span
-                  style={{
-                    width: "8px",
-                    height: "8px",
-                    flex: "none",
-                    borderRadius: "50%",
-                    background: r.dot,
-                    animation: r.dotAnim,
-                  }}
-                />
-                <span
-                  style={{
-                    fontFamily: "'JetBrains Mono',monospace",
-                    fontSize: "13px",
-                    fontWeight: 500,
-                    width: "108px",
-                  }}
-                >
-                  {r.vehicle}
-                </span>
-                <span
-                  style={{
-                    fontSize: "12.5px",
-                    color: "var(--text-secondary)",
-                    flex: 1,
-                    overflow: "hidden",
-                    whiteSpace: "nowrap",
-                    textOverflow: "ellipsis",
-                  }}
-                >
-                  {r.route}
-                </span>
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    flex: "none",
-                    whiteSpace: "nowrap",
-                    fontSize: "11.5px",
-                    fontWeight: 500,
-                    color: r.pillText,
-                    background: r.pillBg,
-                    borderRadius: "999px",
-                    padding: "3px 10px",
-                  }}
-                >
-                  {r.statusLabel}
-                </span>
-                {r.isStart && (
-                  <button
-                    onClick={r.onAction}
-                    style={{
-                      height: "30px",
-                      padding: "0 13px",
-                      border: "none",
-                      borderRadius: "8px",
-                      background: "var(--primary)",
-                      color: "#fff",
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    Start
-                  </button>
-                )}
-                {r.isView && (
-                  <button
-                    onClick={r.onAction}
-                    style={{
-                      height: "30px",
-                      padding: "0 11px",
-                      border: "none",
-                      borderRadius: "8px",
-                      background: "transparent",
-                      color: "var(--primary)",
-                      fontSize: "12px",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                      fontFamily: "inherit",
-                    }}
-                  >
-                    View
-                  </button>
-                )}
-              </div>
-            ))}
-            {vm.attentionEmpty && (
-              <div
-                style={{
-                  padding: "36px",
-                  textAlign: "center",
-                  color: "var(--text-muted)",
-                  fontSize: "13px",
-                }}
+                Start
+              </button>
+            )}
+            {r.isView && (
+              <button
+                onClick={r.onAction}
+                className="rd-btn"
+                style={{ ...BTN_SM, border: "none", background: "transparent", color: "var(--primary)" }}
               >
-                Nothing needs attention right now.
-              </div>
+                View
+              </button>
             )}
           </div>
-        </section>
-      </div>
+        ))}
+        {vm.attentionEmpty && (
+          <EmptyState icon={CheckCircle2}>Nothing needs attention right now.</EmptyState>
+        )}
+      </section>
 
-      <section style={{ marginTop: "24px" }}>
-        <div style={{ fontSize: "14px", fontWeight: 600, marginBottom: "6px" }}>
-          Recent requests
+      {/* Recent requests */}
+      <section
+        className="rd-card"
+        style={{ marginTop: "24px", padding: 0, overflow: "hidden" }}
+      >
+        <div style={{ padding: "18px 20px 14px" }}>
+          <CardHead icon={Clock} title="Recent requests" mb={0} />
         </div>
-        <div
-          style={{
-            border: "1px solid var(--border)",
-            borderRadius: "14px",
-            background: "var(--surface)",
-            boxShadow: CARD_SHADOW,
-            overflow: "hidden",
-          }}
-        >
-          {(vm.recentRows ?? []).map((r, i) => (
-            <div
-              key={i}
-              onClick={r.onClick}
-              className="hov-inset"
+        {(vm.recentRows ?? []).map((r, i) => (
+          <div
+            key={i}
+            onClick={r.onClick}
+            className="hov-inset"
+            style={{ ...LIST_ROW, height: "54px", cursor: "pointer", transition: "background .15s" }}
+          >
+            <span style={{ fontFamily: MONO, fontSize: "13px", fontWeight: 500, width: "120px" }}>
+              {r.vehicle}
+            </span>
+            <span style={ELLIPSIS}>{r.route}</span>
+            <StatusPill text={r.statusLabel} bg={r.pillBg} color={r.pillText} dot={r.dot} />
+            <span
               style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "14px",
-                padding: "0 18px",
-                height: "52px",
-                borderTop: "1px solid var(--divider)",
-                cursor: "pointer",
-                transition: "background .15s",
+                fontSize: "12px",
+                color: "var(--text-muted)",
+                width: "84px",
+                textAlign: "right",
               }}
             >
-              <span
-                style={{
-                  fontFamily: "'JetBrains Mono',monospace",
-                  fontSize: "13px",
-                  fontWeight: 500,
-                  width: "120px",
-                }}
-              >
-                {r.vehicle}
-              </span>
-              <span
-                style={{
-                  fontSize: "12.5px",
-                  color: "var(--text-secondary)",
-                  flex: 1,
-                }}
-              >
-                {r.route}
-              </span>
-              <span style={{ width: "150px", flex: "none" }}>
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: "6px",
-                    whiteSpace: "nowrap",
-                    fontSize: "11.5px",
-                    fontWeight: 500,
-                    color: r.pillText,
-                    background: r.pillBg,
-                    borderRadius: "999px",
-                    padding: "3px 10px",
-                  }}
-                >
-                  <span
-                    style={{
-                      width: "6px",
-                      height: "6px",
-                      borderRadius: "50%",
-                      background: r.dot,
-                    }}
-                  />
-                  {r.statusLabel}
-                </span>
-              </span>
-              <span
-                style={{
-                  fontSize: "12px",
-                  color: "var(--text-muted)",
-                  width: "90px",
-                  textAlign: "right",
-                }}
-              >
-                {r.time}
-              </span>
-              <span style={{ color: "#C5C9D6", fontSize: "16px" }}>›</span>
-            </div>
-          ))}
-        </div>
+              {r.time}
+            </span>
+            <ChevronRight size={16} style={{ color: "var(--text-muted)", flex: "none" }} />
+          </div>
+        ))}
       </section>
     </>
   );

@@ -358,3 +358,9 @@ option {
     grid-template-columns: 1fr;
   }
 }
+
+/* Search / text input focus ring for the redesigned pages. */
+.rd-input:focus {
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 12%, transparent);
+}
