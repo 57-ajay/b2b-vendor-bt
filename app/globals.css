@@ -255,3 +255,104 @@ option {
 .tbx-control:active {
   transform: translateY(0);
 }
+
+/* ============================================================================
+   Request-detail redesign — shared primitives (visual only). Cards, buttons,
+   the dashboard grid, and theme-aware semantic alert tokens. Colours follow the
+   live light/dark CSS variables so everything tracks the theme switch.
+   ============================================================================ */
+:root {
+  --warn: #9a6700;
+  --warn-tint: #fff4d6;
+  --warn-border: rgba(154, 103, 0, 0.22);
+  --danger: #c0392b;
+  --danger-tint: #fcebe9;
+  --danger-border: rgba(192, 57, 43, 0.2);
+}
+[data-theme="dark"] {
+  --warn: #f2c14e;
+  --warn-tint: #362c12;
+  --warn-border: rgba(242, 193, 78, 0.24);
+  --danger: #f08a7e;
+  --danger-tint: #371d1b;
+  --danger-border: rgba(240, 138, 126, 0.26);
+}
+
+.rd-card {
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow:
+    0 1px 2px rgba(2, 6, 111, 0.04),
+    0 12px 32px -20px rgba(2, 6, 111, 0.22);
+  animation: fadeUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition:
+    box-shadow 0.25s ease,
+    border-color 0.25s ease,
+    transform 0.25s ease;
+}
+.rd-card:hover {
+  border-color: color-mix(in srgb, var(--primary) 14%, var(--border));
+  box-shadow:
+    0 1px 2px rgba(2, 6, 111, 0.05),
+    0 18px 40px -22px rgba(2, 6, 111, 0.3);
+}
+
+.rd-btn {
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    filter 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+.rd-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+.rd-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+.rd-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+.rd-btn-primary:hover:not(:disabled) {
+  box-shadow: 0 12px 26px -12px color-mix(in srgb, var(--primary) 60%, transparent);
+  filter: brightness(1.06);
+}
+.rd-btn-ghost:hover:not(:disabled) {
+  background: var(--surface-inset);
+  border-color: color-mix(in srgb, var(--primary) 22%, var(--border));
+}
+.rd-link {
+  transition: opacity 0.15s ease;
+}
+.rd-link:hover {
+  opacity: 0.72;
+}
+
+.rd-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
+.rd-span {
+  grid-column: 1 / -1;
+}
+.rd-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 24px;
+}
+@media (max-width: 880px) {
+  .rd-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 520px) {
+  .rd-fields {
+    grid-template-columns: 1fr;
+  }
+}
