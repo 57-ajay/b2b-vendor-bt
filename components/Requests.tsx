@@ -94,11 +94,26 @@ const COLUMNS: Column<RequestRow>[] = [
   {
     label: "Commission",
     width: 96,
-    cell: (r) => (
-      <span style={{ fontFamily: MONO, fontSize: "12.5px", color: "var(--text-secondary)" }}>
-        {r.commission}
-      </span>
-    ),
+    cell: (r) =>
+      r.commission === "Fixed" ? (
+        <span
+          style={{
+            fontSize: "11px",
+            fontWeight: 600,
+            color: "var(--text-secondary)",
+            background: "var(--surface-inset)",
+            border: "1px solid var(--border)",
+            borderRadius: "6px",
+            padding: "2px 9px",
+          }}
+        >
+          Fixed
+        </span>
+      ) : (
+        <span style={{ fontFamily: MONO, fontSize: "12.5px", color: "var(--text-secondary)" }}>
+          {r.commission}
+        </span>
+      ),
   },
   {
     label: "Earned",

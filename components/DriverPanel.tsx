@@ -1087,11 +1087,7 @@ export default class DriverPanel extends React.Component<
           vehicle: r.vehicleNumber,
           route: r.state + " → " + r.border,
           journey: r.journeyDate,
-          commission: commIsPercent
-            ? commPct + "%"
-            : tax > 0
-              ? Math.round((comm / tax) * 100) + "%"
-              : "—",
+          commission: commIsPercent ? commPct + "%" : "Fixed",
           earned: (commIsPercent ? tax > 0 : true) ? fmtMoney(comm) : "—",
           ...p,
           dotAnim:
