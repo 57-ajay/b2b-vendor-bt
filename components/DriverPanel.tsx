@@ -955,10 +955,17 @@ export default class DriverPanel extends React.Component<
         ),
       );
       const noClick = () => {};
+      // Net earnings = sum of the per-request commission (the requests table's
+      // "Earned" column). Recomputed every render, so it tracks the commission
+      // rate and incoming requests in real time.
+      const netEarnings = reqs.reduce((sum, r) => {
+        const tax = r.taxAmount || 0;
+        return sum + (commIsPercent ? (tax > 0 ? commissionFor(tax) : 0) : commFix);
+      }, 0);
       out.metrics = [
-        { label: "Requests today", value: String(reqs.length), sub: "across statuses", color: "var(--text)", onClick: noClick, cursor: "default", hover: "", caret: "" },
-        { label: "Awaiting payment", value: String(awaitingCount), sub: "needs attention", color: "var(--gold-text)", onClick: noClick, cursor: "default", hover: "", caret: "" },
-        { label: "Completed today", value: String(completedToday), sub: "receipts today", color: "var(--money)", onClick: noClick, cursor: "default", hover: "", caret: "" },
+        { label: "Net earnings", value: fmtMoney(netEarnings), sub: commIsPercent ? commPct + "% commission" : "flat commission", color: "var(--money)", onClick: noClick, cursor: "default", hover: "", caret: "" },
+        { label: "Total requests", value: String(reqs.length), sub: "generated", color: "var(--text)", onClick: noClick, cursor: "default", hover: "", caret: "" },
+        { label: "Completed", value: String(completedToday), sub: "requests completed", color: "var(--money)", onClick: noClick, cursor: "default", hover: "", caret: "" },
         { label: "Success rate", value: succRate + "%", sub: s.dashShowGlance ? "tap to hide breakdown" : "tap for breakdown", color: "var(--money)", onClick: () => this.setState((p) => ({ dashShowGlance: !p.dashShowGlance })), cursor: "pointer", hover: "background:var(--surface-inset)", caret },
       ];
       out.dashShowGlance = s.dashShowGlance;
