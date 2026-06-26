@@ -21,6 +21,7 @@ type Timer = ReturnType<typeof setTimeout>;
    the government-portal request lifecycle.
    ============================================================================ */
 export class MockDriverPanelService implements DriverPanelService {
+  isMock = true;
   vendorId: string;
   requests: DriverRequest[];
   receipts: Record<string, Receipt>;
@@ -299,6 +300,11 @@ export class MockDriverPanelService implements DriverPanelService {
 
   /** No-op in the mock (the simulated lifecycle drives itself). */
   intervene(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  /** No-op in the mock. */
+  cancel(): Promise<void> {
     return Promise.resolve();
   }
 

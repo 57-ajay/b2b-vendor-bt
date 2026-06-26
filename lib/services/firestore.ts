@@ -88,6 +88,7 @@ function callableError(e: unknown): Error {
  * so the agent API stays private and wallet/lifecycle writes stay server-side.
  */
 export class FirestoreDriverPanelService implements DriverPanelService {
+  isMock = false;
   vendorId = "";
   receipts: Record<string, Receipt> = {};
 
@@ -343,6 +344,18 @@ export class FirestoreDriverPanelService implements DriverPanelService {
     }
   }
 
+  async cancel(id: string): Promise<void> {
+    const fn = httpsCallable<{ requestId: string }, { ok: boolean }>(
+      firebaseFunctions(),
+      "cancelRequest",
+    );
+    try {
+      await fn({ requestId: id });
+    } catch (e) {
+      throw callableError(e);
+    }
+  }
+
   // ---- demo-only no-ops (real flow is server-driven) ----
   markPaid(): void {}
   setFailStage(): void {}
@@ -397,6 +410,18 @@ export class FirestoreDriverPanelService implements DriverPanelService {
           ? ai?.captcha?.url
           : undefined,
       qrUrl: ai?.qrCode?.url,
+      captcha:
+        display === "ACTION_CAPTCHA" && ai?.captcha
+          ? {
+              url: ai.captcha.url,
+              attempt: ai.captcha.attempt,
+              maxAttempts: ai.captcha.maxAttempts,
+              lastResult: ai.captcha.lastResult,
+              deadline: ai.captcha.inputDeadline
+                ? ai.captcha.inputDeadline.toMillis()
+                : null,
+            }
+          : undefined,
     };
   }
 

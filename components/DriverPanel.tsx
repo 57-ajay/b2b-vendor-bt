@@ -88,6 +88,7 @@ interface DriverPanelState {
   commPercent: string;
   commFixed: string;
   reqComm: Record<string, { mode: "percent" | "fixed"; value: number }>;
+  captchaInput: string;
   _copied?: boolean;
 }
 
@@ -165,6 +166,7 @@ export default class DriverPanel extends React.Component<
       commPercent: "15",
       commFixed: "150",
       reqComm: {},
+      captchaInput: "",
       btSelState: "Andhra Pradesh",
       btSearch: "",
       btAutomation: true,
@@ -660,6 +662,33 @@ export default class DriverPanel extends React.Component<
       const req = this.state.requests.find((x) => x.requestId === rc.requestId);
       this.setState({ receiptModal: { rc, req } });
     });
+  }
+
+  confirmCancel(id: string) {
+    this.setState({
+      modal: {
+        title: "Cancel request",
+        body: "Stop processing this request? If no payment has been made, the held fee is released back to your wallet.",
+        confirmLabel: "Cancel request",
+        onConfirm: () => {
+          this.setState({ modal: null });
+          this.svc
+            .cancel(id)
+            .catch((e: Error) =>
+              this._toast("Couldn’t cancel", e.message, "#E0801F"),
+            );
+        },
+      },
+    });
+  }
+
+  submitCaptcha(id: string) {
+    const input = this.state.captchaInput.trim();
+    if (!input) return;
+    this.setState({ captchaInput: "" });
+    this.svc
+      .intervene(id, input)
+      .catch((e: Error) => this._toast("Captcha failed", e.message, "#E0801F"));
   }
 
   renderVals(): ViewModel {
@@ -1290,12 +1319,46 @@ export default class DriverPanel extends React.Component<
       out.logChevron = s.logOpen ? "⌃" : "⌄";
       out.onToggleLog = () => this.setState((p) => ({ logOpen: !p.logOpen }));
       // action card state
+      const disp = cur.displayStatus;
+      out.ac_captcha = disp === "ACTION_CAPTCHA";
       out.ac_pending = cur.status === "PENDING";
-      out.ac_processing = TRANSIENT.includes(cur.status);
+      out.ac_processing = TRANSIENT.includes(cur.status) && !out.ac_captcha;
       out.ac_awaiting = cur.status === "AWAITING_PAYMENT";
       out.ac_completed = cur.status === "COMPLETED";
       out.ac_failed = cur.status === "FAILED";
       out.ac_reconciling = cur.status === "RECONCILING";
+      out.d_isDemo = this.svc.isMock;
+      // Cancel is offered while the agent is mid-flight (real backend only).
+      out.d_canCancel =
+        !this.svc.isMock &&
+        !!(
+          out.ac_processing ||
+          out.ac_captcha ||
+          out.ac_awaiting ||
+          out.ac_reconciling
+        );
+      out.d_onCancel = () => this.confirmCancel(cur.requestId);
+      // Captcha — the vendor reads the image and relays the code to the customer.
+      if (cur.captcha) {
+        out.d_captchaImg = cur.captcha.url;
+        out.d_captchaAttempt =
+          cur.captcha.maxAttempts != null
+            ? "Attempt " + cur.captcha.attempt + " of " + cur.captcha.maxAttempts
+            : "Attempt " + cur.captcha.attempt;
+        out.d_captchaRejected = cur.captcha.lastResult === "rejected";
+        let ccd = "";
+        if (cur.captcha.deadline) {
+          const left = Math.max(
+            0,
+            Math.floor((cur.captcha.deadline - s.now) / 1000),
+          );
+          ccd = pad(Math.floor(left / 60)) + ":" + pad(left % 60);
+        }
+        out.d_captchaCountdown = ccd;
+      }
+      out.d_captchaInput = s.captchaInput;
+      out.onCaptchaInput = (e) => this.setState({ captchaInput: e.target.value });
+      out.d_onSubmitCaptcha = () => this.submitCaptcha(cur.requestId);
       out.d_priceFmt = fmtMoney(price);
       // Pricing breakdown: the customer pays the government tax plus the vendor
       // commission (configured on Commercials); we remit the tax and keep the
@@ -1338,6 +1401,7 @@ export default class DriverPanel extends React.Component<
       };
       // awaiting
       out.qrEl = this.buildQR();
+      out.d_qrImg = cur.qrUrl;
       out.d_amountFmt = fmtMoney(cur.taxAmount || 0);
       let cd = "--";
       if (cur.qr) {
@@ -1370,8 +1434,16 @@ export default class DriverPanel extends React.Component<
         }
       }
       out.d_onView = () => this.openReceipt(cur.receiptId as string);
-      out.d_onDownload = () =>
-        this._toast("Downloading", "Receipt PDF download started", "#107A52");
+      out.d_onDownload = () => {
+        const rc = cur.receiptId ? svc.receipts[cur.receiptId] : undefined;
+        if (rc && rc.storageUrl && rc.storageUrl !== "#") {
+          window.open(rc.storageUrl, "_blank", "noopener");
+        } else if (this.svc.isMock) {
+          this._toast("Downloading", "Receipt PDF download started", "#107A52");
+        } else {
+          this._toast("Receipt", "The receipt link isn’t ready yet.", "#E0801F");
+        }
+      };
       // failed
       out.d_failReason = cur.failure ? cur.failure.reason : "Processing error.";
       out.d_onRetry = () => {
@@ -1404,6 +1476,7 @@ export default class DriverPanel extends React.Component<
         ac_completed: false,
         ac_failed: false,
         ac_reconciling: false,
+        ac_captcha: false,
       });
     }
 

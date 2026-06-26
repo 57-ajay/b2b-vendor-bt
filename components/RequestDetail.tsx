@@ -472,6 +472,7 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
                 <Zap size={17} /> Start process
               </button>
 
+              {vm.d_isDemo && (
               <div
                 style={{
                   marginTop: "20px",
@@ -515,6 +516,93 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
                   <option value="PAYMENT_SUCCESS">Receipt missing (reconcile)</option>
                 </select>
               </div>
+              )}
+            </>
+          )}
+
+          {/* CAPTCHA — vendor reads the code and relays it to the customer */}
+          {vm.ac_captcha && (
+            <>
+              <CardHead icon={ShieldCheck} title="Captcha needed" mb={12} />
+              <div style={CARD_DESC}>
+                The portal is asking for a captcha. Read the code below and submit
+                it to continue — relay it to the customer if needed.
+              </div>
+              {vm.d_captchaImg && (
+                <div style={{ display: "flex", justifyContent: "center", marginTop: "16px" }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={vm.d_captchaImg}
+                    alt="captcha"
+                    style={{
+                      maxWidth: "100%",
+                      height: "66px",
+                      borderRadius: "10px",
+                      border: "1px solid var(--border)",
+                      background: "#fff",
+                      objectFit: "contain",
+                      padding: "6px",
+                    }}
+                  />
+                </div>
+              )}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginTop: "12px",
+                  fontSize: "12px",
+                  color: "var(--text-muted)",
+                }}
+              >
+                <span>{vm.d_captchaAttempt}</span>
+                {vm.d_captchaCountdown && (
+                  <span style={{ fontFamily: MONO }}>{vm.d_captchaCountdown}</span>
+                )}
+              </div>
+              {vm.d_captchaRejected && (
+                <div style={{ marginTop: "10px" }}>
+                  <Alert tone="danger" icon={AlertTriangle}>
+                    Wrong code — a fresh image will appear shortly.
+                  </Alert>
+                </div>
+              )}
+              <input
+                value={vm.d_captchaInput}
+                onChange={vm.onCaptchaInput}
+                placeholder="Enter code"
+                style={{
+                  width: "100%",
+                  marginTop: "14px",
+                  height: "44px",
+                  border: "1px solid var(--border)",
+                  borderRadius: "10px",
+                  padding: "0 14px",
+                  fontSize: "14px",
+                  fontFamily: MONO,
+                  letterSpacing: ".06em",
+                  outline: "none",
+                  background: "var(--surface)",
+                  color: "var(--text)",
+                }}
+              />
+              <button
+                onClick={vm.d_onSubmitCaptcha}
+                className="rd-btn rd-btn-primary"
+                style={{ ...BTN_PRIMARY, marginTop: "12px" }}
+              >
+                <CheckCircle2 size={16} /> Submit captcha
+              </button>
+              {vm.d_canCancel && (
+                <button
+                  onClick={vm.d_onCancel}
+                  className="rd-btn rd-btn-ghost"
+                  style={{ ...BTN_GHOST, marginTop: "10px", width: "100%" }}
+                >
+                  Cancel request
+                </button>
+              )}
             </>
           )}
 
@@ -556,6 +644,15 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
               >
                 <Wallet size={13} /> {vm.d_priceFmt} held
               </div>
+              {vm.d_canCancel && (
+                <button
+                  onClick={vm.d_onCancel}
+                  className="rd-btn rd-btn-ghost"
+                  style={{ ...BTN_GHOST, marginTop: "18px" }}
+                >
+                  Cancel request
+                </button>
+              )}
             </div>
           )}
 
@@ -564,7 +661,8 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
             <>
               <CardHead icon={QrCode} title="Awaiting payment" mb={12} />
               <div style={CARD_DESC}>
-                Driver scans to pay the tax. We advance automatically on confirmation.
+                Show this QR to the customer to pay the tax. We advance
+                automatically once payment is confirmed.
               </div>
               <div style={{ display: "flex", justifyContent: "center", marginTop: "18px" }}>
                 <div
@@ -578,7 +676,16 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
                     boxShadow: "0 12px 30px -16px rgba(2,6,111,.32)",
                   }}
                 >
-                  {vm.qrEl}
+                  {vm.d_qrImg ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={vm.d_qrImg}
+                      alt="UPI QR"
+                      style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                    />
+                  ) : (
+                    vm.qrEl
+                  )}
                 </div>
               </div>
               <div style={{ textAlign: "center", marginTop: "16px" }}>
@@ -627,13 +734,30 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
                   <Share2 size={15} /> Share
                 </button>
               </div>
-              <button
-                onClick={vm.d_onMarkPaid}
-                className="rd-btn rd-btn-primary"
-                style={{ ...BTN_PRIMARY, height: "44px", marginTop: "10px" }}
-              >
-                <CheckCircle2 size={16} /> Mark paid (demo)
-              </button>
+              {vm.d_isDemo ? (
+                <button
+                  onClick={vm.d_onMarkPaid}
+                  className="rd-btn rd-btn-primary"
+                  style={{ ...BTN_PRIMARY, height: "44px", marginTop: "10px" }}
+                >
+                  <CheckCircle2 size={16} /> Mark paid (demo)
+                </button>
+              ) : (
+                vm.d_canCancel && (
+                  <button
+                    onClick={vm.d_onCancel}
+                    className="rd-btn rd-btn-ghost"
+                    style={{
+                      ...BTN_GHOST,
+                      height: "44px",
+                      marginTop: "10px",
+                      width: "100%",
+                    }}
+                  >
+                    Cancel request
+                  </button>
+                )
+              )}
             </>
           )}
 

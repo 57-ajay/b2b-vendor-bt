@@ -12,6 +12,8 @@ import type {
    (real backend). The factory in `./index.ts` picks one.
    ============================================================================ */
 export interface DriverPanelService {
+  /** True for the in-memory mock (demo-only controls render only then). */
+  isMock: boolean;
   /** Set after a successful login; "" while logged out. */
   vendorId: string;
   /** Receipts keyed by receiptId, kept in sync with the requests stream. */
@@ -46,8 +48,10 @@ export interface DriverPanelService {
   topUpWallet(vendorId: string, amount: number): Promise<void>;
   updateSettings(vendorId: string, patch: Partial<Settings>): Promise<void>;
 
-  /** Submit a captcha answer / "paid" nudge to the agent (Phase 5 UI). */
+  /** Submit a captcha answer to the agent. */
   intervene(id: string, input: string): Promise<void>;
+  /** Ask the agent to cancel an in-progress request. */
+  cancel(id: string): Promise<void>;
 
   /** Demo-only in the mock; no-op in Firestore (payment is auto-detected). */
   markPaid(id: string): void;

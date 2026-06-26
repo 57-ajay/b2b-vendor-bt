@@ -70,6 +70,14 @@ export interface DriverRequest {
   captchaUrl?: string;
   /** UPI QR image URL (Phase 5). */
   qrUrl?: string;
+  /** Captcha the agent needs solved (vendor relays to the customer). */
+  captcha?: {
+    url: string;
+    attempt: number;
+    maxAttempts: number | null;
+    lastResult: "awaiting_input" | "rejected" | "accepted";
+    deadline: number | null;
+  };
 }
 
 export interface Receipt {
@@ -569,6 +577,19 @@ export interface ViewModel {
   d_onDownload?: ClickHandler;
   d_failReason?: string;
   d_onRetry?: ClickHandler;
+  /* captcha + cancel (real backend) */
+  ac_captcha?: boolean;
+  d_isDemo?: boolean;
+  d_qrImg?: string;
+  d_canCancel?: boolean;
+  d_onCancel?: ClickHandler;
+  d_captchaImg?: string;
+  d_captchaAttempt?: string;
+  d_captchaRejected?: boolean;
+  d_captchaCountdown?: string;
+  d_captchaInput?: string;
+  onCaptchaInput?: InputHandler;
+  d_onSubmitCaptcha?: ClickHandler;
 
   /* wallet */
   topupQuick?: QuickTopup[];
