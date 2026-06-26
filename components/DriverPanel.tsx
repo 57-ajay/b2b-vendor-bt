@@ -11,7 +11,8 @@ import {
   TRANSIENT,
 } from "@/lib/constants";
 import { monthData as computeMonthData } from "@/lib/month-data";
-import { MockDriverPanelService } from "@/lib/mock-service";
+import { createService } from "@/lib/services";
+import type { DriverPanelService } from "@/lib/services/types";
 import type {
   BtStateCfg,
   DriverRequest,
@@ -114,9 +115,10 @@ export default class DriverPanel extends React.Component<
   Record<string, never>,
   DriverPanelState
 > {
-  svc: MockDriverPanelService;
+  svc: DriverPanelService;
   private _prevStatus: Record<string, RequestStatus>;
   private _toastSeq: number;
+  private _unsubAuth?: () => void;
   private _unsubR?: () => void;
   private _unsubW?: () => void;
   private _unsubT?: () => void;
@@ -124,13 +126,13 @@ export default class DriverPanel extends React.Component<
 
   constructor(props: Record<string, never>) {
     super(props);
-    this.svc = new MockDriverPanelService();
+    this.svc = createService();
     this.state = {
       route: "login",
       currentId: null,
       loggedIn: false,
-      loginEmail: "operator@taxflow.in",
-      loginPass: "demo1234",
+      loginEmail: "",
+      loginPass: "",
       showPass: false,
       loginErr: "",
       loginBusy: false,
@@ -191,7 +193,36 @@ export default class DriverPanel extends React.Component<
   }
 
   componentDidMount() {
-    this._unsubR = this.svc.subscribeToRequests(this.svc.vendorId, (rs) => {
+    // Drive subscriptions off auth: start reading only once a vendor is signed
+    // in and the vendorId claim is known; tear down on sign-out. (The mock
+    // starts signed-out and fires the vendorId on its demo login.)
+    this._unsubAuth = this.svc.init((vendorId) => {
+      if (vendorId) {
+        this._startSubscriptions(vendorId);
+        this.setState((p) => ({
+          loggedIn: true,
+          loginBusy: false,
+          loginErr: "",
+          route: p.route === "login" ? "dashboard" : p.route,
+        }));
+      } else {
+        this._stopSubscriptions();
+        this._prevStatus = {};
+        this.setState({
+          loggedIn: false,
+          route: "login",
+          requests: [],
+          wallet: null,
+          transactions: [],
+        });
+      }
+    });
+    this._tick = setInterval(() => this.setState({ now: Date.now() }), 1000);
+  }
+
+  private _startSubscriptions(vendorId: string) {
+    this._stopSubscriptions();
+    this._unsubR = this.svc.subscribeToRequests(vendorId, (rs) => {
       rs.forEach((r) => {
         const p = this._prevStatus[r.requestId];
         if (p && p !== r.status) {
@@ -215,18 +246,18 @@ export default class DriverPanel extends React.Component<
         return { requests: rs, reqComm };
       });
     });
-    this._unsubW = this.svc.subscribeToWallet(this.svc.vendorId, (w) =>
+    this._unsubW = this.svc.subscribeToWallet(vendorId, (w) =>
       this.setState({ wallet: w }),
     );
-    this._unsubT = this.svc.subscribeToTransactions(this.svc.vendorId, (t) =>
+    this._unsubT = this.svc.subscribeToTransactions(vendorId, (t) =>
       this.setState({ transactions: t }),
     );
     this.svc
-      .getSettings(this.svc.vendorId)
+      .getSettings(vendorId)
       .then((s) =>
         this.setState({ settings: s, priceEdit: String(s.pricePerRequest) }),
-      );
-    this._tick = setInterval(() => this.setState({ now: Date.now() }), 1000);
+      )
+      .catch(() => {});
     this.svc.scheduleLiveArrival((nr) => {
       this._prevStatus[nr.requestId] = nr.status;
       if (this.state.notifOn)
@@ -234,10 +265,24 @@ export default class DriverPanel extends React.Component<
     });
   }
 
+  private _stopSubscriptions() {
+    if (this._unsubR) {
+      this._unsubR();
+      this._unsubR = undefined;
+    }
+    if (this._unsubW) {
+      this._unsubW();
+      this._unsubW = undefined;
+    }
+    if (this._unsubT) {
+      this._unsubT();
+      this._unsubT = undefined;
+    }
+  }
+
   componentWillUnmount() {
-    if (this._unsubR) this._unsubR();
-    if (this._unsubW) this._unsubW();
-    if (this._unsubT) this._unsubT();
+    if (this._unsubAuth) this._unsubAuth();
+    this._stopSubscriptions();
     clearInterval(this._tick);
     this.svc.dispose();
   }
@@ -547,11 +592,10 @@ export default class DriverPanel extends React.Component<
   // ---- actions ----
   doLogin() {
     this.setState({ loginBusy: true, loginErr: "" });
+    // On success the auth observer (componentDidMount) flips loggedIn + route
+    // and starts the subscriptions; we only handle the failure here.
     this.svc
       .login(this.state.loginEmail, this.state.loginPass)
-      .then(() => {
-        this.setState({ loggedIn: true, loginBusy: false, route: "dashboard" });
-      })
       .catch((e: Error) =>
         this.setState({ loginBusy: false, loginErr: e.message }),
       );
@@ -948,8 +992,9 @@ export default class DriverPanel extends React.Component<
       onToggleProfile: () =>
         this.setState((p) => ({ profileOpen: !p.profileOpen })),
       onLogout: () => {
-        this.svc.logout();
-        this.setState({ loggedIn: false, route: "login", profileOpen: false });
+        this.setState({ profileOpen: false });
+        // The auth observer flips loggedIn + route and clears the data.
+        void this.svc.logout();
       },
       // toasts/modal
       toasts: s.toasts,

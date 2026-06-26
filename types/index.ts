@@ -1,4 +1,5 @@
 import type { ChangeEvent, MouseEvent, ReactNode } from "react";
+import type { AgentStatus, DisplayStatus } from "@/types/firestore";
 
 /* ============================================================================
    Domain model — ported 1:1 from the source MockDriverPanelService.
@@ -58,6 +59,17 @@ export interface DriverRequest {
   _failStage?: FailStage | string;
   /** Transient highlight flag for newly-arrived rows (internal). */
   _isNew?: boolean;
+  /* ---- real-backend metadata (Firestore adapter; optional) ---- */
+  /** Raw suvidha agent lifecycle status, when dispatched. */
+  agentStatus?: AgentStatus;
+  /** Richer panel status (mapped from the agent lifecycle). */
+  displayStatus?: DisplayStatus;
+  /** The vendor must take an action (start / captcha / pay / retry). */
+  needsAction?: boolean;
+  /** Captcha image URL to show the vendor (Phase 5). */
+  captchaUrl?: string;
+  /** UPI QR image URL (Phase 5). */
+  qrUrl?: string;
 }
 
 export interface Receipt {
