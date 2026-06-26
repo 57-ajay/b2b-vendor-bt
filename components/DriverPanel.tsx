@@ -86,6 +86,7 @@ interface DriverPanelState {
   commMode: "percent" | "fixed";
   commPercent: string;
   commFixed: string;
+  reqComm: Record<string, { mode: "percent" | "fixed"; value: number }>;
   _copied?: boolean;
 }
 
@@ -161,6 +162,7 @@ export default class DriverPanel extends React.Component<
       commMode: "percent",
       commPercent: "15",
       commFixed: "150",
+      reqComm: {},
       btSelState: "Andhra Pradesh",
       btSearch: "",
       btAutomation: true,
@@ -197,7 +199,21 @@ export default class DriverPanel extends React.Component<
         }
         this._prevStatus[r.requestId] = r.status;
       });
-      this.setState({ requests: rs });
+      // Stamp each request with the commission terms in effect the first time it
+      // is seen, so later changes to the commercials setting never rewrite the
+      // earnings of requests that were already handled.
+      this.setState((prev) => {
+        const reqComm = { ...prev.reqComm };
+        const mode = prev.commMode;
+        const value =
+          mode === "percent"
+            ? parseFloat(prev.commPercent) || 0
+            : parseInt(prev.commFixed, 10) || 0;
+        rs.forEach((r) => {
+          if (!reqComm[r.requestId]) reqComm[r.requestId] = { mode, value };
+        });
+        return { requests: rs, reqComm };
+      });
     });
     this._unsubW = this.svc.subscribeToWallet(this.svc.vendorId, (w) =>
       this.setState({ wallet: w }),
@@ -615,6 +631,22 @@ export default class DriverPanel extends React.Component<
     const commFix = parseInt(s.commFixed, 10) || 0;
     const commissionFor = (tax: number) =>
       commIsPercent ? Math.round((tax * commPct) / 100) : commFix;
+    // Per-request commission using the terms snapshotted when the request was
+    // first seen (s.reqComm); falls back to the current setting if unstamped.
+    const commForReq = (r: DriverRequest) => {
+      const cfg = s.reqComm[r.requestId] || {
+        mode: s.commMode,
+        value: commIsPercent ? commPct : commFix,
+      };
+      const tax = r.taxAmount || 0;
+      const isPct = cfg.mode === "percent";
+      const earnedNum: number | null = isPct
+        ? tax > 0
+          ? Math.round((tax * cfg.value) / 100)
+          : null
+        : cfg.value;
+      return { isPct, value: cfg.value, earnedNum };
+    };
 
     // counts
     const completedToday = reqs.filter((r) => r.status === "COMPLETED").length;
@@ -958,12 +990,12 @@ export default class DriverPanel extends React.Component<
       // Net earnings = sum of the per-request commission (the requests table's
       // "Earned" column). Recomputed every render, so it tracks the commission
       // rate and incoming requests in real time.
-      const netEarnings = reqs.reduce((sum, r) => {
-        const tax = r.taxAmount || 0;
-        return sum + (commIsPercent ? (tax > 0 ? commissionFor(tax) : 0) : commFix);
-      }, 0);
+      const netEarnings = reqs.reduce(
+        (sum, r) => sum + (commForReq(r).earnedNum || 0),
+        0,
+      );
       out.metrics = [
-        { label: "Net earnings", value: fmtMoney(netEarnings), sub: commIsPercent ? commPct + "% commission" : "flat commission", color: "var(--money)", onClick: noClick, cursor: "default", hover: "", caret: "" },
+        { label: "Net earnings", value: fmtMoney(netEarnings), sub: "commission earned", color: "var(--money)", onClick: noClick, cursor: "default", hover: "", caret: "" },
         { label: "Total requests", value: String(reqs.length), sub: "generated", color: "var(--text)", onClick: noClick, cursor: "default", hover: "", caret: "" },
         { label: "Completed", value: String(completedToday), sub: "requests completed", color: "var(--money)", onClick: noClick, cursor: "default", hover: "", caret: "" },
         { label: "Success rate", value: succRate + "%", sub: s.dashShowGlance ? "tap to hide breakdown" : "tap for breakdown", color: "var(--money)", onClick: () => this.setState((p) => ({ dashShowGlance: !p.dashShowGlance })), cursor: "pointer", hover: "background:var(--surface-inset)", caret },
@@ -1087,15 +1119,14 @@ export default class DriverPanel extends React.Component<
         const p = pill(r.status);
         const start = r.status === "PENDING";
         const retry = r.status === "FAILED";
-        const tax = r.taxAmount || 0;
-        const comm = commissionFor(tax);
+        const cfg = commForReq(r);
         return {
           shortId: r.requestId,
           vehicle: r.vehicleNumber,
           route: r.state + " → " + r.border,
           journey: r.journeyDate,
-          commission: commIsPercent ? commPct + "%" : "Fixed",
-          earned: (commIsPercent ? tax > 0 : true) ? fmtMoney(comm) : "—",
+          commission: cfg.isPct ? cfg.value + "%" : "Fixed",
+          earned: cfg.earnedNum != null ? fmtMoney(cfg.earnedNum) : "—",
           ...p,
           dotAnim:
             r.status === "AWAITING_PAYMENT"
@@ -1224,17 +1255,18 @@ export default class DriverPanel extends React.Component<
       // Pricing breakdown: the customer pays the government tax plus the vendor
       // commission (configured on Commercials); we remit the tax and keep the
       // commission as profit. Percentage commissions resolve once tax is known.
+      const curCfg = commForReq(cur);
       const prTax = cur.taxAmount || 0;
       const prTaxKnown = prTax > 0;
-      const prComm = commissionFor(prTax);
-      const prCommKnown = commIsPercent ? prTaxKnown : true;
+      const prComm = curCfg.earnedNum; // number | null
       out.d_pr_taxKnown = prTaxKnown;
-      out.d_pr_received = prTaxKnown ? fmtMoney(prTax + prComm) : "—";
+      out.d_pr_received =
+        prTaxKnown && prComm != null ? fmtMoney(prTax + prComm) : "—";
       out.d_pr_vendor = prTaxKnown ? fmtMoney(prTax) : "—";
-      out.d_pr_profit = prCommKnown ? fmtMoney(prComm) : "—";
-      out.d_pr_margin = commIsPercent
-        ? commPct + "% commission"
-        : prTaxKnown
+      out.d_pr_profit = prComm != null ? fmtMoney(prComm) : "—";
+      out.d_pr_margin = curCfg.isPct
+        ? curCfg.value + "% commission"
+        : prTaxKnown && prComm != null
           ? Math.round((prComm / (prTax + prComm)) * 100) + "% margin"
           : "Flat commission";
       const covers = s.wallet
