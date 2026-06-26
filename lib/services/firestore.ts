@@ -37,11 +37,14 @@ import type {
 import type { DriverPanelService } from "@/lib/services/types";
 
 /**
- * Bounded page size for the live Requests listener. Phase 7 swaps this for real
- * `startAfter` pagination + rollup-counter dashboards; 200 keeps reads bounded
- * while the dashboard/list still work against the live window.
+ * Bounded window for the live Requests listener (newest-first). This keeps reads
+ * O(window) regardless of total volume; the dashboard + list bind to it. For a
+ * very high-volume vendor, raise NEXT_PUBLIC_REQUESTS_WINDOW and/or wire the
+ * `startAfter` "load more" + rollup-counter dashboard documented in
+ * docs/PRODUCTION.md.
  */
-const REQUESTS_WINDOW = 200;
+const REQUESTS_WINDOW =
+  Number(process.env.NEXT_PUBLIC_REQUESTS_WINDOW) || 200;
 const TXN_WINDOW = 100;
 
 const STATE_NAMES: Record<string, string> = {

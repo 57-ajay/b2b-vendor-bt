@@ -9,6 +9,10 @@
  * falls back to the in-memory mock when Firebase is not configured.
  */
 import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
+import {
+  initializeAppCheck,
+  ReCaptchaV3Provider,
+} from "firebase/app-check";
 import { getAuth, connectAuthEmulator, type Auth } from "firebase/auth";
 import {
   getFirestore,
@@ -40,6 +44,7 @@ export const isFirebaseConfigured = Boolean(
 );
 
 const useEmulators = process.env.NEXT_PUBLIC_FIREBASE_EMULATORS === "1";
+const appCheckSiteKey = process.env.NEXT_PUBLIC_FIREBASE_APPCHECK_SITE_KEY;
 
 let _app: FirebaseApp | undefined;
 
@@ -63,6 +68,18 @@ function ensureApp(): FirebaseApp {
         "127.0.0.1",
         5001,
       );
+    }
+    // App Check (reCAPTCHA v3) — protects callables, especially the public
+    // intake. Browser-only; no-op when the site key is absent.
+    if (fresh && appCheckSiteKey && typeof window !== "undefined") {
+      try {
+        initializeAppCheck(_app, {
+          provider: new ReCaptchaV3Provider(appCheckSiteKey),
+          isTokenAutoRefreshEnabled: true,
+        });
+      } catch {
+        // already initialized — ignore
+      }
     }
   }
   return _app;
