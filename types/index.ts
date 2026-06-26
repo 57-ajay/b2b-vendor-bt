@@ -1,4 +1,5 @@
 import type { ChangeEvent, MouseEvent, ReactNode } from "react";
+import type { AgentStatus, DisplayStatus } from "@/types/firestore";
 
 /* ============================================================================
    Domain model — ported 1:1 from the source MockDriverPanelService.
@@ -58,6 +59,25 @@ export interface DriverRequest {
   _failStage?: FailStage | string;
   /** Transient highlight flag for newly-arrived rows (internal). */
   _isNew?: boolean;
+  /* ---- real-backend metadata (Firestore adapter; optional) ---- */
+  /** Raw suvidha agent lifecycle status, when dispatched. */
+  agentStatus?: AgentStatus;
+  /** Richer panel status (mapped from the agent lifecycle). */
+  displayStatus?: DisplayStatus;
+  /** The vendor must take an action (start / captcha / pay / retry). */
+  needsAction?: boolean;
+  /** Captcha image URL to show the vendor (Phase 5). */
+  captchaUrl?: string;
+  /** UPI QR image URL (Phase 5). */
+  qrUrl?: string;
+  /** Captcha the agent needs solved (vendor relays to the customer). */
+  captcha?: {
+    url: string;
+    attempt: number;
+    maxAttempts: number | null;
+    lastResult: "awaiting_input" | "rejected" | "accepted";
+    deadline: number | null;
+  };
 }
 
 export interface Receipt {
@@ -557,6 +577,19 @@ export interface ViewModel {
   d_onDownload?: ClickHandler;
   d_failReason?: string;
   d_onRetry?: ClickHandler;
+  /* captcha + cancel (real backend) */
+  ac_captcha?: boolean;
+  d_isDemo?: boolean;
+  d_qrImg?: string;
+  d_canCancel?: boolean;
+  d_onCancel?: ClickHandler;
+  d_captchaImg?: string;
+  d_captchaAttempt?: string;
+  d_captchaRejected?: boolean;
+  d_captchaCountdown?: string;
+  d_captchaInput?: string;
+  onCaptchaInput?: InputHandler;
+  d_onSubmitCaptcha?: ClickHandler;
 
   /* wallet */
   topupQuick?: QuickTopup[];

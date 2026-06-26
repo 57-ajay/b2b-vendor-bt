@@ -1,0 +1,88 @@
+rules_version = '2';
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Vendor Border-Tax Panel — Firestore security rules.
+//
+// Model: clients READ via realtime listeners, scoped by the `vendorId` custom
+// claim. Clients never WRITE directly — every mutation goes through a callable
+// Cloud Function (submit / start / intervene / cancel / settings / topup) or
+// the suvidha agent, both of which use the Admin SDK and BYPASS these rules.
+// So `allow write: if false` locks out browsers while leaving server writes
+// untouched. This keeps wallet balances and the agent lifecycle tamper-proof.
+// ─────────────────────────────────────────────────────────────────────────────
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function callerVendorId() {
+      return request.auth.token.vendorId;
+    }
+    function isVendor(vid) {
+      return isSignedIn() && request.auth.token.vendorId == vid;
+    }
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
+    // Vendor profile / branding / pricing / commission.
+    match /vendors/{vendorId} {
+      allow read: if isVendor(vendorId) || isAdmin();
+      allow write: if false; // updateVendorSettings / provisionVendor callables
+
+      // Vendor's customers (CRM). customerId doubles as the agent's driverId.
+      match /customers/{customerId} {
+        allow read: if isVendor(vendorId) || isAdmin();
+        allow write: if false;
+      }
+
+      // Maintained rollup counters for the dashboard (avoids scans at scale).
+      match /stats/{statDoc} {
+        allow read: if isVendor(vendorId) || isAdmin();
+        allow write: if false;
+      }
+    }
+
+    // Wallet balance + ledger — read-only to the owner; mutated only by Functions.
+    match /wallets/{vendorId} {
+      allow read: if isVendor(vendorId) || isAdmin();
+      allow write: if false;
+
+      match /transactions/{txnId} {
+        allow read: if isVendor(vendorId) || isAdmin();
+        allow write: if false;
+      }
+    }
+
+    // THE shared request doc. Vendor reads only their own; the customer intake
+    // page does not read it (intake-only). Lifecycle is written by the agent
+    // (Admin SDK). Listing requires a `where('vendorId','==', <claim>)` filter,
+    // which this rule enforces.
+    match /borderTaxRequests/{requestId} {
+      allow read: if isAdmin()
+                  || (isSignedIn() && resource.data.vendorId == callerVendorId());
+      allow write: if false;
+    }
+
+    // Phone → auth-email resolution for login. Server (callable) only — never
+    // exposed to clients to prevent account enumeration.
+    match /loginIndex/{normalizedPhone} {
+      allow read, write: if false;
+    }
+
+    // Public, display-safe vendor info for the customer intake page (business
+    // name, logo, theme). No auth — the intake link is public. Written only by
+    // Functions (provisionVendor / updateVendorSettings).
+    match /vendorPublic/{vendorId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Default deny.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

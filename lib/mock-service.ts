@@ -1,4 +1,5 @@
 import { FAIL_REASON } from "@/lib/constants";
+import type { DriverPanelService } from "@/lib/services/types";
 import type {
   DriverRequest,
   Receipt,
@@ -19,7 +20,8 @@ type Timer = ReturnType<typeof setTimeout>;
    In-memory store with subscription fan-out and a timer-driven simulation of
    the government-portal request lifecycle.
    ============================================================================ */
-export class MockDriverPanelService {
+export class MockDriverPanelService implements DriverPanelService {
+  isMock = true;
   vendorId: string;
   requests: DriverRequest[];
   receipts: Record<string, Receipt>;
@@ -33,6 +35,7 @@ export class MockDriverPanelService {
   private _txnSubs: TxnCb[];
   private _timers: Timer[];
   private _txnSeq: number;
+  private _authCb?: (vendorId: string | null) => void;
 
   constructor() {
     const now = Date.now();
@@ -269,10 +272,21 @@ export class MockDriverPanelService {
     return new Date().toISOString();
   }
 
+  /** Observe auth. The mock starts signed-out so the login screen shows, then
+      fires the vendorId on a successful demo login (matching the real flow). */
+  init(onVendor: (vendorId: string | null) => void): () => void {
+    this._authCb = onVendor;
+    onVendor(null);
+    return () => {
+      this._authCb = undefined;
+    };
+  }
+
   login(email: string, password: string): Promise<{ vendorId: string }> {
     return new Promise((res, rej) =>
       setTimeout(() => {
         if (email && password && password.length >= 4) {
+          this._authCb?.(this.vendorId);
           res({ vendorId: this.vendorId });
         } else rej(new Error("Invalid email or password."));
       }, 700),
@@ -280,6 +294,17 @@ export class MockDriverPanelService {
   }
 
   logout(): Promise<void> {
+    this._authCb?.(null);
+    return Promise.resolve();
+  }
+
+  /** No-op in the mock (the simulated lifecycle drives itself). */
+  intervene(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  /** No-op in the mock. */
+  cancel(): Promise<void> {
     return Promise.resolve();
   }
 
