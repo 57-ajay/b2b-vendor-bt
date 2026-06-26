@@ -32,6 +32,7 @@ wallets/{vendorId}                         { balance, heldAmount, currency } —
 wallets/{vendorId}/transactions/{txnId}    TOPUP | HOLD | COMMIT | RELEASE | REFUND ledger
 borderTaxRequests/{requestId}              THE shared request doc (see below); requestId == agent jobId
 loginIndex/{normalizedPhone}              { email } — phone→email login resolution, server-only
+vendorPublic/{vendorId}                    public display fields (businessName, logo, theme) for the intake page
 ```
 
 `borderTaxRequests` is a **flat top-level collection** (not nested under the

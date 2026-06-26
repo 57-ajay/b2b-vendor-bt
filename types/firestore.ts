@@ -38,7 +38,12 @@ export type DisplayStatus =
   | "FAILED";
 
 export type StateCode = "UP" | "HR" | "MP" | "PB";
-export type TaxMode = "DAYS" | "MONTHLY" | "QUARTERLY" | "YEARLY";
+export type TaxMode =
+  | "DAYS"
+  | "MONTHLY"
+  | "QUARTERLY"
+  | "HALF YEARLY"
+  | "YEARLY";
 
 /** Border-tax intake params → POST /api/run params (per-state; see suvidha validators). */
 export interface BorderTaxParams {

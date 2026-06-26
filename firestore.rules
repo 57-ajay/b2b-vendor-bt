@@ -72,6 +72,14 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Public, display-safe vendor info for the customer intake page (business
+    // name, logo, theme). No auth — the intake link is public. Written only by
+    // Functions (provisionVendor / updateVendorSettings).
+    match /vendorPublic/{vendorId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Default deny.
     match /{document=**} {
       allow read, write: if false;
