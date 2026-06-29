@@ -6,18 +6,22 @@ the real agent later by setting `SUVIDHA_API_URL`.
 
 ## 0. One-time project setup (Firebase console)
 
-1. **Firestore** → create database (Native mode). *(Required — it isn't enabled yet.)*
-2. **Authentication** → enable **Email/Password**.
-3. **Project settings → Your apps** → add/copy the **Web app** SDK config
-   (apiKey, messagingSenderId, appId).
-4. Functions need the **Blaze** plan (pay-as-you-go).
+1. **Firestore** → *Create database* → **Native mode**. *(Required — not enabled yet.)*
+2. **Authentication → Sign-in method** → enable **Email/Password**. *(done ✓)*
+3. **Project settings (⚙) → General → Your apps**: if there's no **Web app**
+   (`</>`), add one (any nickname, skip Hosting). Copy its `firebaseConfig` — you
+   need **apiKey**, **messagingSenderId**, **appId**. (projectId / authDomain /
+   storageBucket are already pre-filled in the env template.)
+4. **Upgrade to the Blaze plan** — Cloud Functions require it.
 
-## 1. Secrets & env (already gitignored — never committed)
+## 1. Env & key (gitignored — keep `.env.local`, don't rename the example)
 
-- Place the service-account key at the repo root as **`service-account.json`**.
-- `cp .env.local.example .env.local` and fill the three remaining Web values
-  (`NEXT_PUBLIC_FIREBASE_API_KEY`, `…_MESSAGING_SENDER_ID`, `…_APP_ID`).
-  Keep `NEXT_PUBLIC_USE_MOCK=0`.
+- Put the service-account key at the repo root as **`service-account.json`**
+  (the JSON you downloaded from *Project settings → Service accounts → Generate
+  new private key*).
+- `cp .env.local.example .env.local`, then fill the three Web values from step 0.3:
+  `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`,
+  `NEXT_PUBLIC_FIREBASE_APP_ID`. Keep `NEXT_PUBLIC_USE_MOCK=0`.
 - `cp functions/.env.example functions/.env`. Leave `SUVIDHA_API_URL` **blank**
   to use the built-in mock agent. (Region defaults to `us-central1`; if you
   change `FUNCTIONS_REGION`, set `NEXT_PUBLIC_FIREBASE_FUNCTIONS_REGION` to match.)
@@ -32,22 +36,43 @@ cd functions && npm install && cd ..
 ## 3. Deploy rules, indexes & functions
 
 ```bash
+npx firebase login
 npx firebase use b2b-vendor-74ee9
+
+# Functions declare two secrets, so they must EXIST before deploy or it fails.
+# For the mock path any value is fine (INTERNAL_API_KEY is only used by the real
+# agent). Run each and type a value at the prompt:
+npx firebase functions:secrets:set INTERNAL_API_KEY        # e.g. "unused"
+npx firebase functions:secrets:set ADMIN_BOOTSTRAP_SECRET  # e.g. "change-me"
+
 npx firebase deploy --only firestore:rules,firestore:indexes,functions
 ```
 
 (Alternatively run everything locally: `npx firebase emulators:start` and set
-`NEXT_PUBLIC_FIREBASE_EMULATORS=1` in `.env.local`.)
+`NEXT_PUBLIC_FIREBASE_EMULATORS=1` in `.env.local` — no Blaze/secrets needed.)
 
-## 4. Seed a demo vendor
+## 4. Create a vendor (this *is* the onboarding flow)
+
+Vendors don't self-register — you create their credentials and share them. The
+`provisionVendor` callable does exactly this (Auth user + `vendorId` claim +
+vendor/wallet/public docs); the seed script runs the same logic with the
+service-account key:
 
 ```bash
-cd functions && npm run seed && cd ..
+cd functions
+# quick demo vendor (vendor@demo.in / vendor123, ₹5000 wallet):
+npm run seed
+
+# a real vendor — share the printed creds with them:
+VENDOR_EMAIL=ops@theirbiz.com VENDOR_PASSWORD='Strong#Pass1' \
+  VENDOR_NAME='Their Business' VENDOR_PHONE='+9198XXXXXXXX' TOPUP=5000 npm run seed
+cd ..
 ```
 
-Prints a vendor login (`vendor@demo.in` / `vendor123`, or the phone) and the
-**customer link `/r/{vendorId}`** with a ₹5000 wallet. Add `ADMIN_EMAIL=you@x.com`
-to also grant yourself an admin claim (for `provisionVendor` / `adminTopup`).
+It prints the login (email **or** phone + password) and the **customer link
+`/r/{vendorId}`**. Add `ADMIN_EMAIL=you@x.com` to also grant yourself an admin
+claim. There's no admin web page yet — ask and I'll add a "create vendor" screen
+so you can onboard without the CLI.
 
 ## 5. Run & test the full flow
 
