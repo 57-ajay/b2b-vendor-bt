@@ -119,6 +119,11 @@ export interface BorderTaxRequestDoc {
   // Denormalized for indexed queries / rollups (maintained by triggers).
   displayStatus?: DisplayStatus;
   needsAction?: boolean;
+  // Operational flags written by Functions.
+  walletHeld?: boolean;
+  walletSettled?: boolean;
+  mockAgent?: boolean;
+  mockActive?: boolean;
   // Agent-owned:
   aiAgentData?: AiAgentData;
   status?: "completed" | "cancelled" | "failed";

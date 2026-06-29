@@ -561,6 +561,11 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
                   <span style={{ fontFamily: MONO }}>{vm.d_captchaCountdown}</span>
                 )}
               </div>
+              {vm.d_mockAgent && (
+                <div style={{ marginTop: "8px", fontSize: "12px", color: "var(--text-muted)" }}>
+                  Test mode — any code works.
+                </div>
+              )}
               {vm.d_captchaRejected && (
                 <div style={{ marginTop: "10px" }}>
                   <Alert tone="danger" icon={AlertTriangle}>
@@ -734,6 +739,15 @@ export default function RequestDetail({ vm }: { vm: ViewModel }) {
                   <Share2 size={15} /> Share
                 </button>
               </div>
+              {vm.d_mockAgent && (
+                <button
+                  onClick={vm.d_onSimulatePaid}
+                  className="rd-btn rd-btn-primary"
+                  style={{ ...BTN_PRIMARY, height: "44px", marginTop: "10px" }}
+                >
+                  <CheckCircle2 size={16} /> Simulate customer payment (test)
+                </button>
+              )}
               {vm.d_isDemo ? (
                 <button
                   onClick={vm.d_onMarkPaid}
