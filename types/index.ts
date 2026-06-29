@@ -78,6 +78,8 @@ export interface DriverRequest {
     lastResult: "awaiting_input" | "rejected" | "accepted";
     deadline: number | null;
   };
+  /** True when the built-in mock agent is driving this request (test mode). */
+  mockAgent?: boolean;
 }
 
 export interface Receipt {
@@ -590,6 +592,8 @@ export interface ViewModel {
   d_captchaInput?: string;
   onCaptchaInput?: InputHandler;
   d_onSubmitCaptcha?: ClickHandler;
+  d_mockAgent?: boolean;
+  d_onSimulatePaid?: ClickHandler;
 
   /* wallet */
   topupQuick?: QuickTopup[];

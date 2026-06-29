@@ -1,8 +1,9 @@
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 
 import { db, FieldValue, now } from "./admin";
-import { INTERNAL_API_KEY } from "./config";
+import { INTERNAL_API_KEY, SUVIDHA_API_URL } from "./config";
 import { agentRun } from "./lib/agent";
+import { mockStart } from "./mockAgent";
 import {
   computeDisplay,
   type DisplayStatus,
@@ -47,7 +48,7 @@ function buildRunParams(
  * API private: the URL + key live here, never in the browser.
  */
 export const onStartRequested = onDocumentWritten(
-  { document: DOC, secrets: [INTERNAL_API_KEY] },
+  { document: DOC, secrets: [INTERNAL_API_KEY], timeoutSeconds: 120 },
   async (event) => {
     const after = event.data?.after.data();
     if (!after) return;
@@ -58,6 +59,22 @@ export const onStartRequested = onDocumentWritten(
 
     const requestId = event.params.requestId;
     const reqRef = db.doc(`borderTaxRequests/${requestId}`);
+
+    // No real agent configured → drive the built-in mock (testable e2e).
+    if (!SUVIDHA_API_URL.value()) {
+      try {
+        await mockStart(requestId);
+      } catch (e) {
+        await reqRef.update({
+          "start.dispatchError": (e as Error).message || "Mock start failed.",
+          displayStatus: "FAILED",
+          needsAction: true,
+          updatedAt: now(),
+        });
+      }
+      return;
+    }
+
     try {
       const r = await agentRun(buildRunParams(requestId, after));
       if (r.ok) {

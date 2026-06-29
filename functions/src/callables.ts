@@ -6,8 +6,10 @@ import {
   DEFAULT_SERVICE_FEE,
   ENFORCE_APP_CHECK,
   INTERNAL_API_KEY,
+  SUVIDHA_API_URL,
 } from "./config";
 import { agentCancel, agentIntervene } from "./lib/agent";
+import { mockCancel, mockIntervene } from "./mockAgent";
 import {
   isMobile,
   isVehicleNumber,
@@ -186,23 +188,40 @@ export const retryRequest = onCall(async (request) => {
   return { ok: true };
 });
 
-export const intervene = onCall({ secrets: [INTERNAL_API_KEY] }, async (request) => {
-  const vendorId = requireVendor(request);
-  const { requestId, input } = request.data as { requestId?: string; input?: string };
-  await loadRequestForVendor(String(requestId || ""), vendorId);
-  const r = await agentIntervene(String(requestId), String(input || ""));
-  if (!r.ok) throw new HttpsError("internal", r.message || "Could not submit.");
-  return { ok: true };
-});
+export const intervene = onCall(
+  { secrets: [INTERNAL_API_KEY], timeoutSeconds: 120 },
+  async (request) => {
+    const vendorId = requireVendor(request);
+    const { requestId, input } = request.data as {
+      requestId?: string;
+      input?: string;
+    };
+    await loadRequestForVendor(String(requestId || ""), vendorId);
+    if (!SUVIDHA_API_URL.value()) {
+      await mockIntervene(String(requestId), String(input || ""));
+      return { ok: true };
+    }
+    const r = await agentIntervene(String(requestId), String(input || ""));
+    if (!r.ok) throw new HttpsError("internal", r.message || "Could not submit.");
+    return { ok: true };
+  },
+);
 
-export const cancelRequest = onCall({ secrets: [INTERNAL_API_KEY] }, async (request) => {
-  const vendorId = requireVendor(request);
-  const { requestId } = request.data as { requestId?: string };
-  await loadRequestForVendor(String(requestId || ""), vendorId);
-  const r = await agentCancel(String(requestId));
-  if (!r.ok) throw new HttpsError("internal", r.message || "Could not cancel.");
-  return { ok: true };
-});
+export const cancelRequest = onCall(
+  { secrets: [INTERNAL_API_KEY], timeoutSeconds: 120 },
+  async (request) => {
+    const vendorId = requireVendor(request);
+    const { requestId } = request.data as { requestId?: string };
+    await loadRequestForVendor(String(requestId || ""), vendorId);
+    if (!SUVIDHA_API_URL.value()) {
+      await mockCancel(String(requestId));
+      return { ok: true };
+    }
+    const r = await agentCancel(String(requestId));
+    if (!r.ok) throw new HttpsError("internal", r.message || "Could not cancel.");
+    return { ok: true };
+  },
+);
 
 /* ---- vendor: settings + wallet top-up request ---- */
 export const updateVendorSettings = onCall(async (request) => {

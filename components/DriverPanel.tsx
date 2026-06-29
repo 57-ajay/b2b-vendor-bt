@@ -1359,6 +1359,12 @@ export default class DriverPanel extends React.Component<
       out.d_captchaInput = s.captchaInput;
       out.onCaptchaInput = (e) => this.setState({ captchaInput: e.target.value });
       out.d_onSubmitCaptcha = () => this.submitCaptcha(cur.requestId);
+      out.d_mockAgent = !!cur.mockAgent;
+      out.d_onSimulatePaid = () => {
+        this.svc
+          .intervene(cur.requestId, "paid")
+          .catch((e: Error) => this._toast("Couldn’t simulate", e.message, "#E0801F"));
+      };
       out.d_priceFmt = fmtMoney(price);
       // Pricing breakdown: the customer pays the government tax plus the vendor
       // commission (configured on Commercials); we remit the tax and keep the

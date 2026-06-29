@@ -413,6 +413,7 @@ export class FirestoreDriverPanelService implements DriverPanelService {
           ? ai?.captcha?.url
           : undefined,
       qrUrl: ai?.qrCode?.url,
+      mockAgent: data.mockAgent === true,
       captcha:
         display === "ACTION_CAPTCHA" && ai?.captcha
           ? {
