@@ -640,17 +640,35 @@ export default class DriverPanel extends React.Component<
 
   topUp(amount: number) {
     if (!amount || amount <= 0) return;
+    const real = !this.svc.isMock;
     this.setState({
       modal: {
-        title: "Confirm top-up",
-        body: "Add " + fmtMoney(amount) + " to your wallet?",
-        confirmLabel: "Add funds",
+        title: real ? "Request top-up" : "Confirm top-up",
+        body: real
+          ? "Request " +
+            fmtMoney(amount) +
+            " to be added to your wallet? Our team confirms it shortly."
+          : "Add " + fmtMoney(amount) + " to your wallet?",
+        confirmLabel: real ? "Request funds" : "Add funds",
         onConfirm: () => {
           this.setState({ modal: null, topupCustom: "" });
           this.svc
             .topUpWallet(this.svc.vendorId, amount)
             .then(() =>
-              this._toast("Wallet topped up", "Added " + fmtMoney(amount), "#107A52"),
+              real
+                ? this._toast(
+                    "Top-up requested",
+                    fmtMoney(amount) + " — we’ll confirm shortly.",
+                    "#E0801F",
+                  )
+                : this._toast(
+                    "Wallet topped up",
+                    "Added " + fmtMoney(amount),
+                    "#107A52",
+                  ),
+            )
+            .catch((e: Error) =>
+              this._toast("Top-up failed", e.message, "#E0801F"),
             );
         },
       },
