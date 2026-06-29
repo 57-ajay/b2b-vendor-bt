@@ -36,19 +36,20 @@ cd functions && npm install && cd ..
 ## 3. Deploy rules, indexes & functions
 
 ```bash
-npx firebase login
-npx firebase use b2b-vendor-74ee9
+npm install -g firebase-tools     # the `firebase` CLI (NOT the `firebase` npm SDK)
+firebase login
+firebase use b2b-vendor-74ee9
 
 # Functions declare two secrets, so they must EXIST before deploy or it fails.
 # For the mock path any value is fine (INTERNAL_API_KEY is only used by the real
 # agent). Run each and type a value at the prompt:
-npx firebase functions:secrets:set INTERNAL_API_KEY        # e.g. "unused"
-npx firebase functions:secrets:set ADMIN_BOOTSTRAP_SECRET  # e.g. "change-me"
+firebase functions:secrets:set INTERNAL_API_KEY        # e.g. "unused"
+firebase functions:secrets:set ADMIN_BOOTSTRAP_SECRET  # e.g. "change-me"
 
-npx firebase deploy --only firestore:rules,firestore:indexes,functions
+firebase deploy --only firestore:rules,firestore:indexes,functions
 ```
 
-(Alternatively run everything locally: `npx firebase emulators:start` and set
+(Alternatively run everything locally: `firebase emulators:start` and set
 `NEXT_PUBLIC_FIREBASE_EMULATORS=1` in `.env.local` — no Blaze/secrets needed.)
 
 ## 4. Create a vendor (this *is* the onboarding flow)
@@ -101,8 +102,8 @@ requests (~1 step/min). The interactive buttons make it instant.
   # functions/.env
   SUVIDHA_API_URL=https://your-agent.example.com
   # secret:
-  npx firebase functions:secrets:set INTERNAL_API_KEY
-  npx firebase deploy --only functions
+  firebase functions:secrets:set INTERNAL_API_KEY
+  firebase deploy --only functions
   ```
   With `SUVIDHA_API_URL` set, the mock is bypassed and Functions call the real
   agent (`/api/run`, `/intervene`, `/cancel`); everything else is unchanged.
